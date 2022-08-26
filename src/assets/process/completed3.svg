@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>进度条步骤/数字/已完成/4</title>
+    <g id="进度条步骤/数字/已完成/4" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#FFFFFF" opacity="0" x="0" y="0" width="24" height="24"></rect>
+        <g id="Light/2-控件/18流程/带步骤/已完成/图标" transform="translate(2.000000, 2.000000)">
+            <g id="编组-18备份-6" fill="#E6F2FF" stroke="#0077FF">
+                <circle id="椭圆形备份" cx="10" cy="10" r="9.5"></circle>
+            </g>
+            <g id="1" transform="translate(6.952000, 5.204000)" fill="#0077FF" fill-rule="nonzero">
+                <polygon id="路径" points="5.124 3.468 5.124 5.796 6.372 5.796 6.372 6.9 5.124 6.9 5.124 8.796 3.852 8.796 3.852 6.9 0 6.9 0 6.012 3.216 0 4.596 0 1.488 5.796 3.852 5.796 3.852 3.468"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>

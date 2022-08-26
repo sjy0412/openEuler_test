@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>进度条步骤/数字/进行中/7</title>
+    <defs>
+        <circle id="path-1" cx="10" cy="10" r="10"></circle>
+    </defs>
+    <g id="进度条步骤/数字/进行中/7" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#FFFFFF" opacity="0" x="0" y="0" width="24" height="24"></rect>
+        <g id="Light/2-控件/18流程/带步骤/已完成/图标备份-14" transform="translate(2.000000, 2.000000)">
+            <g id="椭圆形备份">
+                <circle stroke="#FFFFFF" stroke-width="2" stroke-linejoin="square" fill="#0077FF" fill-rule="evenodd" cx="10" cy="10" r="9"></circle>
+                <circle stroke="#0077FF" stroke-width="1.4" cx="10" cy="10" r="10.7"></circle>
+            </g>
+            <g id="2" transform="translate(7.042000, 5.204000)" fill="#FFFFFF" fill-rule="nonzero">
+                <polygon id="路径" points="3.936 1.524 0 1.524 0 0 5.892 0 5.892 1.08 2.856 8.796 0.96 8.796"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>

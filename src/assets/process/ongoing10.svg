@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>进度条步骤/数字/进行中/10</title>
+    <defs>
+        <circle id="path-1" cx="10" cy="10" r="10"></circle>
+    </defs>
+    <g id="进度条步骤/数字/进行中/10" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#FFFFFF" opacity="0" x="0" y="0" width="24" height="24"></rect>
+        <g id="Light/2-控件/18流程/带步骤/进行中/图标备份" transform="translate(2.000000, 2.000000)">
+            <g id="椭圆形备份">
+                <circle stroke="#FFFFFF" stroke-width="2" stroke-linejoin="square" fill="#0077FF" fill-rule="evenodd" cx="10" cy="10" r="9"></circle>
+                <circle stroke="#0077FF" stroke-width="1.4" cx="10" cy="10" r="10.7"></circle>
+            </g>
+            <g id="2" transform="translate(4.074252, 5.449172)" fill="#FFFFFF" fill-rule="nonzero">
+                <polygon id="路径" points="0 3.348 0 1.68 2.688 0.156 4.044 0.156 4.044 8.952 2.28 8.952 2.28 2.076"></polygon>
+                <path d="M10.864,4.56 C10.864,6.04 10.596,7.166 10.06,7.938 C9.524,8.71 8.76,9.096 7.768,9.096 C6.776,9.096 6.01,8.71 5.47,7.938 C4.93,7.166 4.66,6.04 4.66,4.56 C4.66,3.072 4.93,1.94 5.47,1.164 C6.01,0.388 6.776,0 7.768,0 C8.76,0 9.524,0.388 10.06,1.164 C10.596,1.94 10.864,3.072 10.864,4.56 Z M6.508,4.56 C6.508,5.552 6.61,6.29 6.814,6.774 C7.018,7.258 7.336,7.5 7.768,7.5 C8.2,7.5 8.516,7.258 8.716,6.774 C8.916,6.29 9.016,5.552 9.016,4.56 C9.016,3.56 8.916,2.816 8.716,2.328 C8.516,1.84 8.2,1.596 7.768,1.596 C7.336,1.596 7.018,1.838 6.814,2.322 C6.61,2.806 6.508,3.552 6.508,4.56 Z" id="形状"></path>
+            </g>
+        </g>
+    </g>
+</svg>
