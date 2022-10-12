@@ -4,7 +4,7 @@
       <img src="@/assets/login/headerIcon.svg" />
       <span>openEuler认证报告生成平台管理</span>
     </div>
-    <div class="user">
+    <div class="user" v-if="isShow">
       <img src="@/assets/login/user1.svg" />
       <div class="user-menu">
         <div class="menu-top">
@@ -21,7 +21,7 @@
             <span class="menu-right">12.22.32.255</span>
           </div>
         </div>
-        <div class="menu-bottom">
+        <div class="menu-bottom" @click="handleLogout">
           <span>退出登录</span>
         </div>
       </div>
@@ -30,8 +30,44 @@
 </template>
 
 <script>
+import { loginService } from '@/utils/loginService';
 export default {
   name: "HeaderHome",
+  data() {
+    return {
+      isShow: true,
+    }
+  },
+
+  created() {
+    this.getIsLogin();
+  },
+
+  
+watch: {
+    // 如果路由有变化，会再次执行该方法
+  '$route': 'getIsLogin'
+},
+
+  methods: {
+    // 判断是否是登录页面
+    getIsLogin() {
+      if(window.location.href.indexOf('login') > -1) {
+        this.isShow = false;
+      }else {
+        this.isShow = true;
+      }
+    },
+
+    handleLogout() {
+      loginService.logout().then(res => {
+        if(res.data.code === this.$statusCode.SUCCESS) {
+          this.$router.push('/login');
+          document.cookie = 'token= ';
+        }
+      })
+    }
+  }
 };
 </script>
 

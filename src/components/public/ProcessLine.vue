@@ -5,17 +5,17 @@
       :key="index"
       :class="[
         'status-step',
-        item.status === 'success' ? 'success' : '',
+        index < currentIndex ? 'success' : '',
         statusList.length > 6 ? 'step-width' : '',
       ]"
     >
-      <div :class="['step-index', item.status === 'active' ? 'active1' : '']">
-        <span :class="item.status === 'active' ? 'active2' : ''">{{
+      <div :class="['step-index', index === currentIndex ? 'active1' : '']">
+        <span :class="index === currentIndex ? 'active2' : ''">{{
           index + 1
         }}</span>
       </div>
-      <span :class="item.status === 'active' ? 'active-text' : ''">{{
-        item.text
+      <span :class="index === currentIndex ? 'active-text' : ''">{{
+        item
       }}</span>
     </div>
   </div>
@@ -24,7 +24,7 @@
 <script>
 export default {
   name: "ProcessLine",
-  props: ["statusList"],
+  props: ["statusList", "currentIndex"],
   data() {
     return {};
   },

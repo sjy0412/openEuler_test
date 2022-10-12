@@ -1,27 +1,11 @@
 <template>
   <div class="left-box">
     <ul class="left-panel">
-      <router-link to="/workbench/task">
-        <li :class="['menu-item', currentIndex === 1 ? 'active' : '']" @click="changeMenu(1)">
-          <span>任务列表</span>
+       <router-link :to="item.url"  v-for="(item,index) in menuList" :key="index">
+        <li :class="['menu-item', currentIndex === index ? 'active' : '']" @click="changeMenu(index)">
+          <span>{{item.label}}</span>
         </li>
-      </router-link>
-      <router-link to="/workbench/serverManagement">
-        <li :class="['menu-item', currentIndex === 2 ? 'active' : '']" @click="changeMenu(2)">
-          <span>服务器管理</span>
-        </li>
-      </router-link>
-      <router-link to="/workbench/MenuManagement">
-        <li :class="['menu-item', currentIndex === 3 ? 'active' : '']" @click="changeMenu(3)">
-          <span>下拉菜单管理</span>
-        </li>
-      </router-link>
-      <router-link to="/workbench/accountMaintenance">
-        <li :class="['menu-item', currentIndex === 4 ? 'active' : '']" @click="changeMenu(4)">
-          <span>账号维护</span>
-        </li>
-      </router-link>
-        
+      </router-link> 
     </ul>
   </div>
 </template>
@@ -30,7 +14,25 @@
 export default {
   data() {
     return {
-      currentIndex: 1,
+      currentIndex: 0,
+      menuList: [
+        {
+          label: '任务列表',
+          url: '/workbench/task',
+        },
+        {
+          label: '服务器管理',
+          url: '/workbench/serverManagement',
+        },
+        {
+          label: '下拉菜单管理',
+          url: '/workbench/MenuManagement',
+        },
+        {
+          label: '账号维护',
+          url: '/workbench/accountMaintenance',
+        },
+      ]
     }
   },
 
@@ -42,13 +44,13 @@ export default {
     // 根据路由设置菜单高亮
     setHighlight() {
       if(this.$route.name === 'TaskList') {
-        this.currentIndex = 1;
+        this.currentIndex = 0;
       }else if (this.$route.name === 'ServerManagement') {
-        this.currentIndex = 2;
+        this.currentIndex = 1;
       }else if (this.$route.name === 'MenuManagement') {
-        this.currentIndex = 3;
+        this.currentIndex = 2;
       }else if (this.$route.name === 'AccountMaintenance') {
-        this.currentIndex = 4;
+        this.currentIndex = 3;
       }
     },
 

@@ -2,13 +2,13 @@
   <div class="project-card">
     <el-timeline>
       <el-timeline-item
-        v-for="(item, index) in testProcess"
+        v-for="(item, index) in testData"
         :key="index"
         :icon="item.icon"
-        :class="item.nextStatus === 'error' ? 'test-error' : (item.nextStatus === 'active' ? 'test-active' : 'test-success')"
+        :class="item.nextStatus === 'test failed' ? 'test-error' : (item.nextStatus === 'testing' ? 'test-active' : 'test-success')"
         >
         {{item.content}}
-        <span class="rerun-test" v-if="item.status === 'error' && index === testProcess.length - 1">重跑测试</span>
+        <span class="rerun-test" v-if="item.status === 'test failed' && index === testProcess.length - 1">重跑测试</span>
         <br>
         {{item.timestamp}}
       </el-timeline-item>
@@ -17,13 +17,52 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 
 export default {
   name: 'Test',
-  props: ['testProcess'],
   data() {
     return {
+      testData: [],
     }
+  },
+  computed: {
+    ...mapState('detail', {
+      detailData: 'detail'
+    })
+  },
+
+  watch: {
+    detailData: {
+			handler(newVal) {
+				newVal.testMessageList.forEach((item, index) => {
+          let obj = {
+            content: `第${item.retryTime}次测试`,
+            timestamp: `开始时间：${item.startTime},任务ID：${item.taskId}`,
+            icon: item.status === 'test failed' ? 'el-icon-error' : "el-icon-more",
+            status: item.status,
+            nextStatus: "",
+          }
+          if(item.failureReason) {
+            obj.timestamp += `，失败原因：${item.failureReason}`;
+            obj.content += '失败';
+          }
+          if(item.terminateReason) {
+            obj.timestamp += `，终止原因：${item.terminateReason}`;
+            obj.content = '测试终止';
+          }
+          if(item.status === 'test finished') {
+            obj.timestamp = `完成时间：${newVal.finishTime},任务ID：${item.taskId}`;
+            obj.content = '已完成'
+          }
+          this.testData.push(obj);
+          if(index !== 0) {
+            this.testData[index].nextStatus = item.status;
+          }
+        });
+			},
+			deep: true,
+		}, 
   }
 }
 </script>

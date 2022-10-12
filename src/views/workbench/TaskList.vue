@@ -56,6 +56,8 @@
           tooltip-effect="light tooltip-end"
           @filter-change="filterChange"
           resizable
+          sortable="custom"
+          @sort-change="handleSort"
           border
         >
           <template slot="empty">
@@ -63,19 +65,28 @@
           </template>
           <el-table-column
             show-overflow-tooltip
-            prop="taskId"
+            prop="projectId"
             :label="headerLabel[0].label"
             sortable
             width="106"
           >
             <template v-slot="data">
-              <router-link :to= "{path:'/projectDetail',query: {testScene: data.row.testScene}}">
-                <p class="p-text taskId">{{ data.row.taskId }}</p>
+              <router-link
+                :to="{
+                  path: '/projectDetail',
+                  query: { 
+                    projectId: data.row.projectId,
+                    requestId: data.row.requestId,
+                    testScenario: data.row.testScenario
+                   },
+                }" 
+              >
+                <p class="p-text projectId">{{ data.row.projectId ? data.row.projectId : '-' }}</p>
               </router-link>
             </template>
           </el-table-column>
           <el-table-column
-            prop="testId"
+            prop="requestId"
             :label="headerLabel[1].label"
             v-if="headerSelected.includes(headerLabel[1].label)"
             sortable
@@ -84,269 +95,209 @@
           >
           </el-table-column>
           <el-table-column
-            show-overflow-tooltip
-            prop="testScene"
-            width="106"
+            prop="solutionName"
+            :label="headerLabel[2].label"
             v-if="headerSelected.includes(headerLabel[2].label)"
+            show-overflow-tooltip
+            width="118"
           >
-            <div slot="header" slot-scope="{}">
-              <FilterTable
-                :selectOption="filters.testScene"
-                :headerLabel="headerLabel[2].label"
-                @handleFilter="filterChange"
-                :filterSelected="filterSelected.testScene"
-                filterKey="testScene"
-              >
-              </FilterTable>
-            </div>
+            <template v-slot="data">
+              <span>{{ data.row.solutionName ? data.row.solutionName : '-' }}</span>  
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="companyName"
+            :label="headerLabel[3].label"
+            v-if="headerSelected.includes(headerLabel[3].label)"
+            show-overflow-tooltip
+            width="118"
+          >
+            <template v-slot="data">
+              <span>{{ data.row.companyName ? data.row.companyName : '-' }}</span>  
+            </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
-            prop="taskPhase"
-            width="136"
-            v-if="headerSelected.includes(headerLabel[3].label)"
+            prop="testScenario"
+            width="106"
+            v-if="headerSelected.includes(headerLabel[4].label)"
           >
             <div slot="header" slot-scope="{}">
               <FilterTable
-                :selectOption="filters.taskPhase"
-                :headerLabel="headerLabel[3].label"
+                :selectOption="filters.testScenario"
+                :headerLabel="headerLabel[4].label"
                 @handleFilter="filterChange"
-                :filterSelected="filterSelected.taskPhase"
-                filterKey="taskPhase"
+                :filterSelected="filterSelected.testScenario"
+                filterKey="testScenario"
               >
               </FilterTable>
             </div>
             <template v-slot="data">
-              <span v-if="data.row.taskPhase === '等待分配服务器'">
-                <el-tag
-                  color="#f97611"
-                  effect="dark"
-                  type="warning"
-                  style="border: 1px solid #f97611"
-                >
-                  {{ data.row.taskPhase }}
-                </el-tag>
-              </span>
-              <span
-                v-if="
-                  data.row.taskPhase === '测试中' ||
-                  data.row.taskPhase === '测试中(第二轮)'
-                "
+              <span>{{ data.row.testScenario ? data.row.testScenario : '-' }}</span>  
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            prop="testOrganizations"
+            width="106"
+            v-if="headerSelected.includes(headerLabel[5].label)"
+          >
+            <div slot="header" slot-scope="{}">
+              <FilterTable
+                :selectOption="filters.testOrganizations"
+                :headerLabel="headerLabel[5].label"
+                @handleFilter="filterChange"
+                :filterSelected="filterSelected.testOrganizations"
+                filterKey="testOrganizations"
               >
+              </FilterTable>
+            </div>
+            <template v-slot="data">
+              <span>{{ data.row.testOrganizations ? data.row.testOrganizations : '-' }}</span>  
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            prop="taskStatus"
+            width="136"
+            v-if="headerSelected.includes(headerLabel[6].label)"
+          >
+            <div slot="header" slot-scope="{}">
+              <FilterTable
+                :selectOption="filters.taskStatus"
+                :headerLabel="headerLabel[6].label"
+                @handleFilter="filterChange"
+                :filterSelected="filterSelected.taskStatus"
+                filterKey="taskStatus"
+              >
+              </FilterTable>
+            </div>
+            <template v-slot="data">
+              <span>
                 <el-tag
-                  color="#07f"
                   effect="dark"
-                  style="border: 1px solid #07f"
+                  :style="getStyle(data.row.taskStatus)"
                 >
-                  {{ data.row.taskPhase }}
-                </el-tag>
-              </span>
-              <span v-if="data.row.taskPhase === '服务器释放'">
-                <el-tag
-                  color="#2a739d"
-                  effect="dark"
-                  style="border: 1px solid #2a739d"
-                >
-                  {{ data.row.taskPhase }}
-                </el-tag>
-              </span>
-              <span v-if="data.row.taskPhase === '测试完成'">
-                <el-tag
-                  color="#24ab36"
-                  effect="dark"
-                  style="border: 1px solid #24ab36"
-                >
-                  {{ data.row.taskPhase }}
+                  {{ data.row.taskStatus ?  data.row.taskStatus : ''}}
                 </el-tag>
               </span>
             </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
-            prop="status"
+            prop="serverStatus"
             width="106"
-            :label="headerLabel[4].label"
-            v-if="headerSelected.includes(headerLabel[4].label)"
+            :label="headerLabel[7].label"
+            v-if="headerSelected.includes(headerLabel[7].label)"
           >
             <template v-slot="data">
-              <span
-                class="status"
-                v-if="
-                  data.row.status === '排队中' ||
-                  data.row.status === '测试中' ||
-                  data.row.status === '待释放'
-                "
-                >{{ data.row.status }}</span
-              >
-              <span
-                class="status status1"
-                v-if="
-                  data.row.status === '已分配' || data.row.status === '已释放' || data.row.status === '测试成功'
-                "
-                >{{ data.row.status }}</span
-              >
-              <span
-                class="status status2"
-                v-if="data.row.status === '测试失败'"
-                >{{ data.row.status }}</span
-              >
+              <span :class="getClass(data.row.serverStatus)">{{
+                data.row.serverStatus ? data.row.serverStatus : "-"
+              }}</span>
             </template>
           </el-table-column>
           <el-table-column
             prop="submitDate"
-            :label="headerLabel[5].label"
+            :label="headerLabel[8].label"
             width="110"
             sortable
             show-overflow-tooltip
-            v-if="headerSelected.includes(headerLabel[5].label)"
+            v-if="headerSelected.includes(headerLabel[8].label)"
           >
+            <template v-slot="data">
+              <span>{{ data.row.submitDate ? data.row.submitDate : '-' }}</span>  
+            </template>
           </el-table-column>
           <el-table-column
             prop="serverModel"
             width="114"
             show-overflow-tooltip
-            v-if="headerSelected.includes(headerLabel[6].label)"
+            :label="headerLabel[9].label"
+            v-if="headerSelected.includes(headerLabel[9].label)"
           >
-            <div slot="header" slot-scope="{}">
-              <FilterTable
-                :selectOption="filters.serverModel"
-                :headerLabel="headerLabel[6].label"
-                @handleFilter="filterChange"
-                :filterSelected="filterSelected.serverModel"
-                filterKey="serverModel"
-              >
-              </FilterTable>
-            </div>
+            <template v-slot="data">
+              <span>{{ data.row.serverModel ? data.row.serverModel : '-' }}</span>  
+            </template>
           </el-table-column>
           <el-table-column
             prop="OS"
             show-overflow-tooltip
             column-key="OS"
             width="106"
-            v-if="headerSelected.includes(headerLabel[7].label)"
-          >
-            <div slot="header" slot-scope="{}">
-              <FilterTable
-                :selectOption="filters.OS"
-                :headerLabel="headerLabel[7].label"
-                @handleFilter="filterChange"
-                :filterSelected="filterSelected.OS"
-                filterKey="OS"
-              >
-              </FilterTable>
-            </div>
+            :label="headerLabel[10].label"
+            v-if="headerSelected.includes(headerLabel[10].label)"
+          > 
+            <template v-slot="data">
+              <span>{{ data.row.osName ? data.row.osName + ' ' + data.row.osVersion : '-' }}</span>  
+            </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
             prop="serverIp"
-            :label="headerLabel[8].label"
-            v-if="headerSelected.includes(headerLabel[8].label)"
+            :label="headerLabel[11].label"
+            v-if="headerSelected.includes(headerLabel[11].label)"
           >
+            <template v-slot="data">
+              <span>{{ data.row.serverIp ? data.row.serverIp : '-' }}</span>  
+            </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
-            prop="testTime"
-            :label="headerLabel[9].label"
+            prop="startTime"
+            :label="headerLabel[12].label"
             sortable
             width="106"
-            v-if="headerSelected.includes(headerLabel[9].label)"
+            v-if="headerSelected.includes(headerLabel[12].label)"
           >
+          <template v-slot="data">
+              <span>{{ data.row.startTime ? data.row.startTime : '-' }}</span>  
+            </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
-            prop="testDuration"
-            :label="headerLabel[10].label"
+            prop="duration"
+            :label="headerLabel[13].label"
             sortable
             width="106"
-            v-if="headerSelected.includes(headerLabel[10].label)"
+            v-if="headerSelected.includes(headerLabel[13].label)"
           >
+          <template v-slot="data">
+              <span>{{ data.row.duration ? data.row.duration : '-' }}</span>  
+            </template>
           </el-table-column>
           <el-table-column
             prop="operate"
-            :label="headerLabel[11].label"
+            :label="headerLabel[14].label"
             minWidth="220"
             show-overflow-tooltip
-            v-if="headerSelected.includes(headerLabel[11].label)"
+            v-if="headerSelected.includes(headerLabel[14].label)"
           >
             <template v-slot="data">
               <div class="opera-btn">
                 <button
                   v-if="
-                    data.row.taskPhase.includes('测试中') &&
-                    data.row.status === '测试失败'
+                    data.row.taskStatus === '测试完成' ||
+                    data.row.taskStatus === '等待分配服务器'
                   "
                 >
-                  一键重跑
-                </button> 
+                  重跑
+                </button>
                 <button
                   v-if="
-                    data.row.taskPhase === '等待分配服务器' ||
-                    data.row.taskPhase.includes('测试中') 
+                    data.row.taskStatus !== '测试完成' 
                   "
                 >
                   终止测试
-                </button>                
+                </button>
                 <button
                   v-if="
-                    data.row.taskPhase !== '认证结束' &&
-                      !(data.row.taskPhase === '测试完成' &&
-                      data.row.status !== '测试成功') 
+                    data.row.taskStatus !== '认证结束' ||
+                    data.row.taskStatus !== '开始测试' || 
+                    data.row.taskStatus !== '等待分配服务器'
                   "
                 >
                   重新测试
                 </button>
-                <button
-                  v-if="
-                    (data.row.taskPhase === '测试完成' &&
-                      data.row.status === '测试成功') ||
-                    data.row.taskPhase === '服务器释放' ||
-                    data.row.taskPhase === '认证结束'
-                  "
-                >
-                  预览报告
-                </button>
-                <button
-                  v-if="
-                    (data.row.taskPhase === '测试完成' &&
-                      data.row.status === '测试成功') ||
-                    data.row.taskPhase === '服务器释放' ||
-                    data.row.taskPhase === '认证结束'
-                  "
-                >
-                  下载报告
-                </button>
-                <button
-                  v-if="
-                    data.row.taskPhase === '测试完成' &&
-                    data.row.status !== '测试成功'
-                  "
-                >
-                  填写原因
-                </button>
-                <button v-if="
-                      data.row.taskPhase === '测试完成' &&
-                      data.row.status !== '测试成功'
-                    ">重跑测试</button>
-                <el-popover
-                  placement="bottom-start"
-                  trigger="click"
-                  width="88"
-                  popper-class="popper-more"
-                  v-if="
-                    data.row.taskPhase === '测试完成' &&
-                    data.row.status !== '测试成功'
-                  "
-                >
-                  <div class="more-btn">
-                    <p>重新测试</p>
-                    <p>预览报告</p>
-                    <p>下载报告</p>
-                  </div>
-                  <div class="opera-more" slot="reference">
-                    <span>更多</span>
-                    <i class="el-icon-caret-bottom"></i>
-                  </div>
-                </el-popover>
               </div>
             </template>
           </el-table-column>
@@ -369,6 +320,10 @@
 <script>
 import FilterTable from "@/components/public/FilterTable.vue";
 import FilterHeader from "@/components/public/FilterHeader.vue";
+import { taskListService } from '@/utils/taskListService';
+import { menuService } from "@/utils/menuService.js";
+import { noLogin } from "@/utils/publicFunction.js";
+
 export default {
   name: "TaskList",
   components: {
@@ -378,87 +333,7 @@ export default {
   data() {
     return {
       keyword: "",
-      tableData: [
-        {
-          taskId: "20220711002",
-          testId: "王小虎",
-          testScene: "整机与板卡",
-          taskPhase: "等待分配服务器",
-          status: "排队中",
-          submitDate: " 21.128.12.13",
-          serverModel: "TaiShan200",
-          OS: "王小虎",
-          serverIp: " 21.128.12.13",
-          testTime: "20220711003",
-          testDuration: "王小虎",
-          testDuration: "20220711003",
-        },
-        {
-          taskId: "20220711004",
-          testId: "王小虎",
-          testScene: "openEuler商业发行版",
-          taskPhase: "测试中",
-          status: "已分配",
-          submitDate: " 21.128.12.13",
-          serverModel: "TaiShan200",
-          OS: "王小虎",
-          serverIp: " 21.128.12.13",
-          testTime: "20220711003",
-          testDuration: "王小虎",
-        },
-        {
-          taskId: "20220711001",
-          testId: "王小虎",
-          testScene: "商业软件",
-          taskPhase: "测试中(第二轮)",
-          status: "测试失败",
-          submitDate: "1234",
-          serverModel: "TaiShan200",
-          OS: "王小虎",
-          serverIp: " 21.128.12.13",
-          testTime: "20220711003",
-          testDuration: "王小虎",
-        },
-        {
-          taskId: "20220711003",
-          testId: "王小虎",
-          testScene: "商业软件",
-          taskPhase: "测试完成",
-          status: "测试失败",
-          submitDate: " 21.128.12.13",
-          serverModel: "20220711003",
-          OS: "王小虎",
-          serverIp: " 22.128.12.13",
-          testTime: "20220711003",
-          testDuration: "王小虎",
-        },
-        {
-          taskId: "20220711003",
-          testId: "王小虎",
-          testScene: "openEuler商业发行版",
-          taskPhase: "测试完成",
-          status: "测试成功",
-          submitDate: " 21.128.12.13",
-          serverModel: "20220711003",
-          OS: "王小虎",
-          serverIp: " 21.128.12.13",
-          testTime: "20220711003",
-          testDuration: "王小虎",
-        },
-        {
-          taskId: "20220711003",
-          testId: "王小虎",
-          testScene: "整机与板卡",
-          taskPhase: "服务器释放",
-          status: "已释放",
-          submitDate: "20220711003",
-          serverModel: "20220711003",
-          OS: "王小虎",
-          serverIp: "20220711003",
-          testTime: "20220711003",
-          testDuration: "王小虎",
-        },
-      ],
+      tableData: [],
       headerLabel: [
         {
           label: "方案ID",
@@ -471,18 +346,33 @@ export default {
           disabled: false,
         },
         {
+          label: "方案名称",
+          value: "方案名称",
+          disabled: false,
+        },
+        {
+          label: "公司名称",
+          value: "公司名称",
+          disabled: false,
+        },
+        {
           label: "测试场景",
           value: "测试场景",
           disabled: false,
         },
         {
-          label: "任务阶段",
-          value: "任务阶段",
+          label: "测试机构",
+          value: "测试机构",
           disabled: false,
         },
         {
-          label: "状态",
-          value: "状态",
+          label: "测试状态",
+          value: "测试状态",
+          disabled: false,
+        },
+        {
+          label: "服务器状态",
+          value: "服务器状态",
           disabled: false,
         },
         {
@@ -524,9 +414,12 @@ export default {
       headerInit: [
         "方案ID",
         "测试任务ID",
+        "方案名称",
+        "公司名称",
         "测试场景",
-        "任务阶段",
-        "状态",
+        "测试机构",
+        "测试状态",
+        "服务器状态",
         "提交时间",
         "服务器型号",
         "操作系统",
@@ -538,82 +431,154 @@ export default {
       headerSelected: [
         "方案ID",
         "测试任务ID",
+        "方案名称",
+        "公司名称",
         "测试场景",
-        "任务阶段",
-        "状态",
-        "提交时间",
+        "测试机构",
+        "测试状态",
+        "服务器状态",
         "服务器型号",
         "操作系统",
         "服务器IP",
-        "测试时间",
-        "测试时长",
         "操作",
       ],
       filters: {
-        testScene: [],
-        taskPhase: [],
-        serverModel: [],
-        OS: [],
+        testScenario: [],
+        testOrganizations: [],
+        taskStatus: [],
       },
       filterSelected: {
-        testScene: [],
-        taskPhase: [],
-        serverModel: [],
-        OS: [],
+        testScenario: [],
+        testOrganizations: [],
+        taskStatus: [],
       },
       chooseList: [],
       pagination: {
-        total: 100,
+        total: 0,
         currentPage: 1,
         layout: "total, size, prev, pager, next, jumper",
         pageSizes: [10, 20, 30, 50],
         pageSize: 10,
       },
+      params: {
+        testScenario: [], // 测试场景
+        taskStatus: [], 
+        testOrganizations: [],
+        keyword: '',
+        sortType: '', // desc/asc
+        sortKey: '', // projectId|requestId|requestTime|startTime|duration
+        pageNo: 1,
+        pageSize: 10,
+      }
     };
   },
 
   created() {
-    this.tableData.forEach((element) => {
-      this.filters.testScene.push({
-        value: element.testScene,
-        label: element.testScene,
-      });
-    });
-    this.filters.taskPhase = [
-      {
-        value: "任务1",
-        label: "任务1",
-      },
-      {
-        value: "任务2",
-        label: "任务2",
-      },
-    ];
-    this.filters.serverModel = [
-      {
-        value: "型号1",
-        label: "型号1",
-      },
-      {
-        value: "型号2",
-        label: "型号2",
-      },
-    ];
-    this.filters.OS = [
-      {
-        value: "OS1",
-        label: "OS1",
-      },
-      {
-        value: "OS2",
-        label: "OS2",
-      },
-    ];
+    this.getList();
+    this.getItem('ITEM_0019');
   },
 
   methods: {
-    handleSizeChange() {},
-    handleCurrentChange() {},
+    handleSizeChange(val) {
+      this.params.pageSize = val;
+      this.pagination.pageSize = val;
+      this.getList();
+    },
+    handleCurrentChange(val) {
+      this.params.pageNo = val;
+      this.pagination.currentPage = val;
+      this.getList();
+    },
+
+    getClass(val) {
+      let className = "";
+      switch(val) {
+        case '排队中': 
+          className = 'serverStatus status1';
+          break;
+        case '已分配':
+          className = 'serverStatus status2';
+          break;
+        case '待回收':
+          className = 'serverStatus status3';
+          break;
+        case '已回收':
+          className = 'serverStatus status4';
+          break;
+        default: 
+          className = 'serverStatus';
+          break;
+      }
+      return className;
+    },
+
+    getStyle(val) {
+      let style = {}
+      if(val.includes('测试中')) {
+        style = {
+          border:'1px solid #07f',
+          backgroundColor:'#07f',
+        }
+      }else if(val.includes('测试失败')) {
+        style = {
+          border:'1px solid #e32020',
+          backgroundColor:'#e32020',
+        }
+      }
+      switch(val) {
+        case '等待分配服务器': 
+          style = {
+            border:'1px solid #ebaf00',
+            backgroundColor:'#ebaf00',
+          }
+          break;
+        case '已分配服务器':
+          style = {
+            border:'1px solid #2db47c',
+            backgroundColor:'#ebaf00',
+          }
+          break;
+        case '初始化服务器': 
+          style = {
+            border:'1px solid #81ba06',
+            backgroundColor:'#81ba06',
+          }
+          break;
+        case '安装驱动':
+          style = {
+            border:'1px solid #52a3ff',
+            backgroundColor:'#52a3ff',
+          }
+          break;
+        case '测试完成':
+          style = {
+            border:'1px solid #30b7bb',
+            backgroundColor:'#30b7bb',
+          }
+          break;
+        case '认证结束':
+          style = {
+            border:'1px solid #24ab36',
+            backgroundColor:'#24ab36',
+          }
+          break;
+        case '服务器释放':
+          style = {
+            border:'1px solid #2a739d',
+            backgroundColor:'#2a739d',
+          }
+          break;
+        case '测试终止':
+          style = {
+            border:'1px solid #9ea8b9',
+            backgroundColor:'#9ea8b9',
+          }
+          break;
+        default:
+          break;
+      }
+      return style;
+    },
 
     filterHeader(list) {
       this.headerSelected = list;
@@ -623,49 +588,43 @@ export default {
       this.chooseList = this.chooseList.filter((res) => {
         return Object.keys(column)[0].indexOf(res.key) === -1;
       });
-      if (column.testScene) {
-        if (column.testScene.length > 0) {
-          let obj = this.handleFilter(column, "testScene");
+      if (column.testScenario) {
+        if (column.testScenario.length > 0) {
+          let obj = this.handleFilter(column, "testScenario");
           this.chooseList.push(obj);
         }
-        this.filterSelected.testScene = column.testScene;
+        this.filterSelected.testScenario = column.testScenario;
+        this.params.testScenario = column.testScenario;
       }
 
-      if (column.taskPhase) {
-        if (column.taskPhase.length > 0) {
-          let obj = this.handleFilter(column, "taskPhase");
+      if (column.taskStatus) {
+        if (column.taskStatus.length > 0) {
+          let obj = this.handleFilter(column, "taskStatus");
           this.chooseList.push(obj);
         }
-        this.filterSelected.taskPhase = column.taskPhase;
+        this.filterSelected.taskStatus = column.taskStatus;
+        this.params.taskStatus = column.taskStatus;
       }
 
-      if (column.serverModel) {
-        if (column.serverModel.length > 0) {
-          let obj = this.handleFilter(column, "serverModel");
+      if (column.testOrganizations) {
+        if (column.testOrganizations.length > 0) {
+          let obj = this.handleFilter(column, "testOrganizations");
           this.chooseList.push(obj);
         }
-        this.filterSelected.serverModel = column.serverModel;
+        this.filterSelected.testOrganizations = column.testOrganizations;
+        this.params.testOrganizations = column.testOrganizations;
       }
-
-      if (column.OS) {
-        if (column.OS.length > 0) {
-          let obj = this.handleFilter(column, "OS");
-          this.chooseList.push(obj);
-        }
-        this.filterSelected.OS = column.OS;
-      }
+      this.getList();
     },
 
     handleFilter(arr, key) {
       let str = "";
-      if (key === "testScene") {
+      if (key === "testScenario") {
         str = "测试场景：";
-      } else if (key === "taskPhase") {
-        str = "任务阶段：";
-      } else if (key === "serverModel") {
-        str = "服务器型号：";
-      } else {
-        str = "操作系统：";
+      } else if (key === "taskStatus") {
+        str = "测试状态：";
+      } else if (key === "testOrganizations") {
+        str = "测试机构:";
       }
       arr[key].forEach((item, index) => {
         str += item;
@@ -690,14 +649,77 @@ export default {
     clearAll() {
       this.chooseList = [];
       this.filterSelected = {
-        testScene: [],
-        taskPhase: [],
-        serverModel: [],
-        OS: [],
+        testScenario: [],
+        taskStatus: [],
+        testOrganizations: [],
       };
+      this.params.testScenario = [];
+      this.params.taskStatus = [];
+      this.params.testOrganizations = [];
+      this.getList();
     },
 
-    searchData() {},
+    searchData(val) {
+      this.params.keyword = val;
+      this.getList();
+    },
+
+    handleSort(val) {
+      this.params.sortKey = val.prop;
+      this.params.sortType = val === 'descending' ? 'desc' : 'asc';
+      this.getList();
+    },
+
+    getList() {
+      taskListService.getList(this.params).then(res => {
+        if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+          noLogin();
+        } else if (res.data.code === this.$statusCode.SUCCESS) {
+          this.tableData = res.data.body.list;
+          this.pagination.total = res.data.body.total;
+          this.filters.taskStatus = [];
+          this.filters.testScenario = [];
+          res.data.body.taskStatusList.forEach(item => {
+            let obj = {
+              value: item,
+              label: item,
+            }
+            this.filters.taskStatus.push(obj);
+          });
+          res.data.body.testScenarioList.forEach(item => {
+            let obj = {
+              value: item,
+              label: item,
+            }
+            this.filters.testScenario.push(obj);
+          })
+        } else {
+          this.$message({
+            message: res.data.msg,
+            type: "error",
+          });
+        }
+      })
+    },
+
+    // 获取测试机构词条
+    getItem(id) {
+      menuService.getItem(id).then((res) => {
+        if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+          noLogin();
+        } else if (res.data.code === this.$statusCode.SUCCESS) {
+          this.filters.testOrganizations = [];
+          res.data.body.forEach((item) => {
+            let obj = {
+              label: item.name,
+              value: item.name,
+            }
+            this.filters.testOrganizations.push(obj);
+          });
+        }
+      });
+    }
+
   },
 };
 </script>
@@ -732,14 +754,14 @@ export default {
     .task-table {
       padding: 0px 24px 0px 24px;
     }
-    .taskId {
+    .projectId {
       color: #07f;
       cursor: pointer;
     }
-    .status {
+    .serverStatus {
       margin-left: 20px;
     }
-    .status:before {
+    .serverStatus:before {
       position: absolute;
       display: block;
       width: 8px;
@@ -751,16 +773,22 @@ export default {
       transform: translate(0, -50%);
     }
     .status1:before {
-      background: #24ab36;
+      background: #f97611;
     }
     .status2:before {
-      background: #e32020;
+      background: #2db47c;
+    }
+    .status3:before {
+      background: #ebaf00;
+    }
+    .status4:before {
+      background: #24ab36;
     }
     .p-text {
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .taskId {
+    .projectId {
       color: #07f;
       cursor: pointer;
     }
@@ -785,5 +813,8 @@ export default {
       }
     }
   }
+}
+::v-deep.el-table--scrollable-x .el-table__body-wrapper {
+  overflow-x: hidden;
 }
 </style>

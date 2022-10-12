@@ -61,11 +61,11 @@ body, html {
     font-size: 14px;
   }
   .el-input__inner:hover {
-    border: 1px solid #409eff;
+    border: 1px solid #6fb2fd;
   }
   .el-input__inner:active,
   .el-input__inner:focus {
-    border: 1px solid #07f;
+    border: 1px solid #2d8efd;
   }
   input::placeholder {
     color: #8d98aa;
@@ -154,6 +154,7 @@ body, html {
 }
 .el-pagination {
   padding-top: 20px;
+  position: absolute;
   .el-pagination__total {
     font-size: 12px;
     color: #4e5865;
@@ -488,4 +489,8 @@ body, html {
 .el-button--primary:disabled {
   background-color: #b8d9ff;
   color: #fff;
+}
+.is-error .el-input__inner {
+  background: #f7c1c1;
+  border-color: #e32020
 }

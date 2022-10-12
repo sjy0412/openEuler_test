@@ -3,20 +3,26 @@
     <div class="list-box">
       <div class="search-box">
         <div>
-          <el-button type="primary" @click="addPerson">添加人员</el-button>
+          <el-button type="primary" @click="handleEdit()">添加人员</el-button>
           <el-button
             :disabled="multipleSelection.length === 0"
-            @click="handelMulDelete"
+            @click="handleDelete"
             >批量删除</el-button
           >
         </div>
         <div class="task-search">
+          <img
+            src="../../assets/login/clear.svg"
+            v-show="keyword && clearShow"
+            class="input-clear"
+            @mousedown="clearKeyword"
+          />
           <el-input
             type="text"
             placeholder="请输入搜索内容"
-            clearable
             v-model="keyword"
             @change="searchData"
+            @focus="clearShow= true"
             prefix-icon="el-icon-search"
           >
           </el-input>
@@ -61,7 +67,6 @@
           style="width: 100%"
           ref="filterTable"
           tooltip-effect="light tooltip-end"
-          @filter-change="filterChange"
           @selection-change="handleSelectionChange"
           resizable
           border
@@ -70,10 +75,10 @@
             <img src="@/assets/list/noData.svg" />
           </template>
           <el-table-column type="selection" width="30"> </el-table-column>
-          <el-table-column prop="name" :label="headerLabel[0].label">
+          <el-table-column prop="userName" :label="headerLabel[0].label">
           </el-table-column>
           <el-table-column
-            prop="workNum"
+            prop="uniportalId"
             :label="headerLabel[1].label"
             show-overflow-tooltip
             v-if="headerSelected.includes(headerLabel[1].label)"
@@ -96,7 +101,7 @@
             </div>
           </el-table-column>
           <el-table-column
-            prop="role"
+            prop="roleDesc"
             show-overflow-tooltip
             v-if="headerSelected.includes(headerLabel[3].label)"
           >
@@ -112,7 +117,7 @@
             </div>
           </el-table-column>
           <el-table-column
-            prop="group"
+            prop="groupList"
             :label="headerLabel[4].label"
             show-overflow-tooltip
             v-if="headerSelected.includes(headerLabel[4].label)"
@@ -127,9 +132,17 @@
               >
               </FilterTable>
             </div>
+            <template v-slot="data">
+              <span v-for="(item,index) in data.row.groupList" :key="index">
+                {{item}}
+                <span v-if="index !== data.row.groupList.length - 1">,</span>
+                <span v-if="data.row.groupList.length === 0">-</span>
+              </span>
+              
+            </template>
           </el-table-column>
           <el-table-column
-            prop="phone"
+            prop="telephone"
             :label="headerLabel[5].label"
             show-overflow-tooltip
             v-if="headerSelected.includes(headerLabel[5].label)"
@@ -152,10 +165,10 @@
           >
             <template v-slot="data">
               <div class="opera-btn">
-                <button @click="handleDelete(data.$index, data.row)">
+                <button @click="handleDelete(data.row.id)">
                   删除
                 </button>
-                <button @click="handelEdit(data.$index, data.row)">编辑</button>
+                <button @click="handleEdit(data.row)">编辑</button>
               </div>
             </template>
           </el-table-column>
@@ -172,14 +185,8 @@
         </el-pagination>
       </div>
     </div>
-    <el-dialog title="添加人员" :visible.sync="dialogVisible">
-      <Dialog></Dialog>
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="dialogVisible = false"
-          >确 定</el-button
-        >
-        <el-button @click="dialogVisible = false">取 消</el-button>
-      </span>
+    <el-dialog title="添加人员" :visible.sync="dialogVisible" :close-on-click-modal="false">
+      <Dialog @cancel="cancel" :editData="editData"></Dialog>
     </el-dialog>
   </div>
 </template>
@@ -188,6 +195,9 @@
 import FilterTable from "@/components/public/FilterTable.vue";
 import FilterHeader from "@/components/public/FilterHeader.vue";
 import Dialog from "@/components/accountMaintenance/Dialog.vue";
+import { accountService } from '@/utils/accountService';
+import { noLogin } from "@/utils/publicFunction.js";
+
 export default {
   name: "AccountMaintenance",
   components: {
@@ -198,63 +208,10 @@ export default {
   data() {
     return {
       keyword: "",
+      clearShow: false,
       dialogVisible: false,
-      tableData: [
-        {
-          name: "20220711002",
-          workNum: "王小虎",
-          testOrganization: "上海市普陀区金沙江路 1518 弄",
-          role: "等待分配服务器",
-          group: "排队中",
-          phone: " 21.128.12.13",
-          email: "TaiShan200",
-        },
-        {
-          name: "20220711004",
-          workNum: "王小虎",
-          testOrganization: "上海市普陀区金沙江路 1517 弄",
-          role: "测试中",
-          group: "已分配",
-          phone: " 21.128.12.13",
-          email: "TaiShan200",
-        },
-        {
-          name: "20220711001",
-          workNum: "王小虎",
-          testOrganization: "上海市普陀区金沙江路 1519 弄",
-          role: "测试中(第二轮)",
-          group: "测试失败",
-          phone: "1234",
-          email: "TaiShan200",
-        },
-        {
-          name: "20220711003",
-          workNum: "王小虎",
-          testOrganization: "上海市普陀区金沙江路 1520 弄",
-          role: "服务器释放",
-          group: "测试中",
-          phone: " 21.128.12.13",
-          email: "20220711003",
-        },
-        {
-          name: "20220711003",
-          workNum: "王小虎",
-          testOrganization: "上海市普陀区金沙江路 130 弄",
-          role: "服务器释放",
-          group: "待释放",
-          phone: " 21.128.12.13",
-          email: "20220711003",
-        },
-        {
-          name: "20220711003",
-          workNum: "王小虎",
-          testOrganization: "上海市普陀区金沙江路 1516 弄",
-          role: "服务器释放",
-          group: "已释放",
-          phone: "20220711003",
-          email: "20220711003",
-        },
-      ],
+      tableData: [],
+      editData: [],
       headerLabel: [
         {
           label: "姓名",
@@ -330,22 +287,24 @@ export default {
       chooseList: [],
       multipleSelection: [],
       pagination: {
-        total: 100,
+        total: 0,
         currentPage: 1,
         layout: "total, size, prev, pager, next, jumper",
         pageSizes: [10, 20, 30, 50],
         pageSize: 10,
       },
+      params: {
+        pageNo: 1,
+        pageSize: 10,
+        keyword: '',
+        testOrganizations: [],
+        roles: [],
+        groups: [],
+      }
     };
   },
 
   created() {
-    this.tableData.forEach((element) => {
-      this.filters.testOrganization.push({
-        value: element.testOrganization,
-        label: element.testOrganization,
-      });
-    });
     this.filters.role = [
       {
         value: "任务1",
@@ -376,40 +335,85 @@ export default {
         label: "OS2",
       },
     ];
+    this.getUserList();
   },
 
+
   methods: {
-    handleSizeChange() {},
-    handleCurrentChange() {},
-    addPerson() {
-      this.dialogVisible = true;
+    handleSizeChange(val) {
+      this.params.pageSize = val;
+      this.pagination.pageSize = val;
+      this.getUserList();
+    },
+    handleCurrentChange() {
+      this.params.pageNo = val;
+      this.pagination.currentPage = val;
+      this.getUserList();
+    },
+    
+    getUserList() {
+      accountService.getUserList(this.params).then(res => {
+        if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+					noLogin();
+				}else if(res.data.code === this.$statusCode.SUCCESS) {
+          this.tableData = res.data.body.list[0];
+          this.pagination.total = res.data.body.total;
+        }
+      })
     },
 
     handleSelectionChange(val) {
       this.multipleSelection = val;
     },
 
-    // 批量删除
-    handelMulDelete() {},
-
-    // 单行删除
-    handleDelete(index, row) {
+    // 删除
+    handleDelete(id) {
+      let params = [];
+      if(id) {
+        params.push(id);
+      }
+      if(this.multipleSelection.length > 0){
+        params = [];
+        this.multipleSelection.forEach(item => {
+          params.push(item.id);
+        })
+      }
       this.$confirm('账号删除后将不可恢复，确定删除所选账号？', '确认删除', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
         }).then(() => {
-          this.tableData.splice(index, 1);
-          this.$message({
-            type: 'success',
-            message: '删除成功!',
-            duration: 0,
-            showClose: true,
+          accountService.deleteAccount(params).then((res) => { 
+            if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+              noLogin();
+            } else if (res.data.code === this.$statusCode.SUCCESS) { 
+              this.$message({
+                type: 'success',
+                message: '删除成功!',
+                showClose: true,
+              });
+              this.getUserList();
+            } else {
+              this.$message({
+                type: 'error',
+                message: res.data.msg,
+                showClose: true,
+              });
+            }
           });
+          
         })
       
     },
 
-    handleEdit(row) {},
+    handleEdit(row) {
+      if(row) {
+        this.editData = row;
+      }else {
+        this.editData = [];
+      }
+      console.log(this.editData);
+      this.dialogVisible = true;
+    },
     // 表头筛选
     filterHeader(list) {
       this.headerSelected = list;
@@ -485,7 +489,21 @@ export default {
     },
 
     // 关键字搜索
-    searchData() {},
+    searchData(val) {
+      this.params.keyword = val.trim();
+      this.getUserList();
+    },
+
+    clearKeyword() {
+      this.keyword = '';
+      this.params.keyword = '';
+      this.getUserList();
+    },
+
+    cancel(val) {
+      this.dialogVisible = val;
+      this.getUserList();
+    }
   },
 };
 </script>
@@ -504,6 +522,23 @@ export default {
       padding-top: 24px;
       margin-bottom: 16px;
       margin-left: 24px;
+    }
+    .task-search {
+      position: relative;
+    }
+    .input-clear {
+      position: absolute;
+      top: 50%;
+      right: 80px;
+      transform: translate(0, -50%);
+      z-index: 99;
+      cursor: pointer;
+    }
+    .input-clear:hover {
+      content: url("../../assets/login/clear1.svg");
+    }
+    .input-clear:active {
+      content: url("../../assets/login/clear2.svg");
     }
     .filter-list {
       padding-left: 24px;

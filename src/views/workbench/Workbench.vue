@@ -12,11 +12,23 @@
 
 <script>
 import LeftMenu from '@/components/public/LeftMenu.vue';
-
+import { loginService } from '@/utils/loginService';
 export default {
   name: 'Workbench',
   components: {
     LeftMenu
+  },
+
+  created() {
+    this.getUserRole();
+  },
+
+  methods: {
+    getUserRole() {
+      loginService.getUserRole().then(res => {
+        // console.log(res.data);
+      })
+    } 
   }
 }
 </script>

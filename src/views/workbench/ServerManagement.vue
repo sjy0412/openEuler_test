@@ -3,8 +3,8 @@
     <div class="list-box">
       <div class="search-box">
         <div>
-          <el-button type="primary" @click="addEquipment">新增设备</el-button>
-          <el-button disabled>批量删除</el-button>
+          <el-button type="primary" @click="drawer = true">新增设备</el-button>
+          <el-button :disabled="multipleSelection.length === 0" @click="batchDelete">批量删除</el-button>
         </div>
         <div class="task-search">
           <el-input
@@ -74,7 +74,7 @@
           >
           </el-table-column>
           <el-table-column
-            prop="BMC"
+            prop="bmcIp"
             show-overflow-tooltip
             :label="headerLabel[1].label"
             v-if="headerSelected.includes(headerLabel[1].label)"
@@ -98,7 +98,7 @@
             </div>
           </el-table-column>
           <el-table-column
-            prop="serverModel"
+            prop="modelType"
             width="136"
             show-overflow-tooltip
             :label="headerLabel[3].label"
@@ -106,17 +106,17 @@
           >
             <div slot="header" slot-scope="{}">
               <FilterTable
-                :selectOption="filters.serverModel"
+                :selectOption="filters.modelType"
                 :headerLabel="headerLabel[3].label"
                 @handleFilter="filterChange"
-                :filterSelected="filterSelected.serverModel"
-                filterKey="serverModel"
+                :filterSelected="filterSelected.modelType"
+                filterKey="modelType"
               >
               </FilterTable>
             </div>
           </el-table-column>
           <el-table-column
-            prop="serverUsage"
+            prop="testOrganization"
             show-overflow-tooltip
             :label="headerLabel[4].label"
             width="112"
@@ -124,11 +124,11 @@
           >
             <div slot="header" slot-scope="{}">
               <FilterTable
-                :selectOption="filters.serverUsage"
+                :selectOption="filters.testOrganization"
                 :headerLabel="headerLabel[4].label"
                 @handleFilter="filterChange"
-                :filterSelected="filterSelected.serverUsage"
-                filterKey="serverUsage"
+                :filterSelected="filterSelected.testOrganization"
+                filterKey="testOrganization"
               >
               </FilterTable>
             </div>
@@ -169,38 +169,33 @@
             </div>
           </el-table-column>
           <el-table-column
-            prop="CPU"
-            column-key="CPU"
+            prop="cpu"
+            column-key="cpu"
             show-overflow-tooltip
             v-if="headerSelected.includes(headerLabel[7].label)"
           >
             <div slot="header" slot-scope="{}">
               <FilterTable
-                :selectOption="filters.CPU"
+                :selectOption="filters.cpu"
                 :headerLabel="headerLabel[7].label"
                 @handleFilter="filterChange"
-                :filterSelected="filterSelected.CPU"
-                filterKey="CPU"
+                :filterSelected="filterSelected.cpu"
+                filterKey="cpu"
               >
               </FilterTable>
             </div>
           </el-table-column>
           <el-table-column
-            prop="memory"
+            prop="ram"
             :label="headerLabel[8].label"
             show-overflow-tooltip
             v-if="headerSelected.includes(headerLabel[8].label)"
           >
-            <div slot="header" slot-scope="{}">
-              <FilterTable
-                :selectOption="filters.memory"
-                :headerLabel="headerLabel[8].label"
-                @handleFilter="filterChange"
-                :filterSelected="filterSelected.memory"
-                filterKey="memory"
-              >
-              </FilterTable>
-            </div>
+            <template v-slot="data">
+              <span>
+                {{data.row.ram.count + '*' + data.row.ram.size}}
+              </span>
+            </template>
           </el-table-column>
           <el-table-column
             prop="disk"
@@ -266,6 +261,11 @@
                 v-if="data.row.status === '维修中'"
                 >{{ data.row.status }}</span
               >
+              <span
+                class="status status4"
+                v-if="data.row.status === '已回收'"
+                >{{ data.row.status }}</span
+              >
             </template>
           </el-table-column>
           <el-table-column
@@ -277,7 +277,7 @@
           >
             <template v-slot="data">
               <div class="opera-btn">
-                <button>编辑</button>
+                <button @click="handelEdit(data.row)">编辑</button>
                 <button @click="deleteServer(data.row)">删除</button>
               </div>
             </template>
@@ -301,7 +301,7 @@
       :show-close="false"
       :before-close="closeDrawer"
     >
-      <AddEquipment></AddEquipment>
+      <AddEquipment @handleCancel="handleCancel" :editData="editData"></AddEquipment>
     </el-drawer>
   </div>
 </template>
@@ -310,6 +310,9 @@
 import FilterTable from "@/components/public/FilterTable.vue";
 import FilterHeader from "@/components/public/FilterHeader.vue";
 import AddEquipment from "@/components/serverManagement/AddEquipment.vue";
+import { managementService } from "@/utils/managementService.js";
+import { noLogin } from "@/utils/publicFunction.js";
+
 export default {
   name: "ServerManagement",
   components: {
@@ -321,78 +324,7 @@ export default {
     return {
       keyword: "",
       drawer: false,
-      tableData: [
-        {
-          deviceId: "DC_01_001",
-          BMC: "王小虎",
-          serverType: "上海市普陀区金沙江路 1518 弄",
-          serverModel: "等待分配服务器",
-          serverUsage: "排队中",
-          resourceType: "21.128.12.13",
-          platform: "王小虎",
-          CPU: " 21.128.12.13",
-          memory: "20220711003",
-          disk: "4*3.2TB",
-          region: "王小虎",
-          status: "回收中",
-        },
-        {
-          deviceId: "DC_01_002",
-          BMC: "王小虎",
-          serverType: "上海市普陀区金沙江路 1517 弄",
-          serverModel: "测试中",
-          serverUsage: "已分配",
-          resourceType: " 21.128.12.13",
-          platform: "王小虎",
-          CPU: " 21.128.12.13",
-          memory: "20220711003",
-          disk: "4*3.2TB",
-          region: "王小虎",
-          status: "使用中",
-        },
-        {
-          deviceId: "DC_01_003",
-          BMC: "王小虎",
-          serverType: "上海市普陀区金沙江路 1519 弄",
-          serverModel: "测试中(第二轮)",
-          serverUsage: "测试失败",
-          resourceType: "1234",
-          platform: "王小虎",
-          CPU: " 21.128.12.13",
-          memory: "20220711003",
-          disk: "4*3.2TB",
-          region: "王小虎",
-          status: "可分配",
-        },
-        {
-          deviceId: "DC_01_004",
-          BMC: "王小虎",
-          serverType: "上海市普陀区金沙江路 1520 弄",
-          serverModel: "服务器释放",
-          serverUsage: "测试中",
-          resourceType: " 21.128.12.13",
-          platform: "王小虎",
-          CPU: " 22.128.12.13",
-          memory: "20220711003",
-          disk: "4*3.2TB",
-          region: "王小虎",
-          status: "建设中",
-        },
-        {
-          deviceId: "DC_01_005",
-          BMC: "王小虎",
-          serverType: "上海市普陀区金沙江路 130 弄",
-          serverModel: "服务器释放",
-          serverUsage: "待释放",
-          resourceType: " 21.128.12.13",
-          platform: "王小虎",
-          CPU: " 21.128.12.13",
-          memory: "20220711003",
-          disk: "4*3.2TB",
-          region: "王小虎",
-          status: "维修中",
-        },
-      ],
+      tableData: [],
       headerLabel: [
         {
           label: "设备ID",
@@ -415,8 +347,8 @@ export default {
           disabled: false,
         },
         {
-          label: "服务器用途",
-          value: "服务器用途",
+          label: "测试机构",
+          value: "测试机构",
           disabled: false,
         },
         {
@@ -430,8 +362,8 @@ export default {
           disabled: false,
         },
         {
-          label: "CPU",
-          value: "CPU",
+          label: "cpu",
+          value: "cpu",
           disabled: false,
         },
         {
@@ -465,10 +397,10 @@ export default {
         "BMC Ip",
         "服务器类型",
         "服务器型号",
-        "服务器用途",
+        "测试机构",
         "资源类型",
         "算力平台",
-        "CPU",
+        "cpu",
         "内存",
         "硬盘",
         "区域",
@@ -480,10 +412,10 @@ export default {
         "BMC IP",
         "服务器类型",
         "服务器型号",
-        "服务器用途",
+        "测试机构",
         "资源类型",
         "算力平台",
-        "CPU",
+        "cpu",
         "内存",
         "硬盘",
         "区域",
@@ -492,86 +424,132 @@ export default {
       ],
       filters: {
         serverType: [],
-        serverModel: [],
-        serverUsage: [],
+        modelType: [],
+        testOrganization: [],
         resourceType: [],
         platform: [],
-        CPU: [],
-        memory: [],
+        cpu: [],
         region: [],
         status: [],
       },
       filterSelected: {
         serverType: [],
-        serverModel: [],
-        serverUsage: [],
+        modelType: [],
+        testOrganization: [],
         resourceType: [],
         platform: [],
-        CPU: [],
-        memory: [],
+        cpu: [],
         region: [],
         status: [],
       },
       chooseList: [],
       pagination: {
-        total: 100,
+        total: 0,
         currentPage: 1,
         layout: "total, size, prev, pager, next, jumper",
         pageSizes: [10, 20, 30, 50],
         pageSize: 10,
       },
+      params: {
+        serverTypeList: [],
+        modelTypeList: [],
+        resourceTypeList: [],
+        platformList: [],
+        cpuList: [],
+        ramList: [],
+        regionList: [],
+        statusList: [],
+        keyword: '',
+        pageNo: 1,
+        pageSize: 10
+      },
+      editData: {},
+      multipleSelection: [],
     };
   },
 
   created() {
-    this.tableData.forEach((element) => {
-      this.filters.serverType.push({
-        value: element.serverType,
-        label: element.serverType,
-      });
-    });
-    this.filters.serverType = [
-      {
-        value: "任务1",
-        label: "任务1",
-      },
-      {
-        value: "任务2",
-        label: "任务2",
-      },
-    ];
-    this.filters.serverModel = [
-      {
-        value: "型号1",
-        label: "型号1",
-      },
-      {
-        value: "型号2",
-        label: "型号2",
-      },
-    ];
-    this.filters.platform = [
-      {
-        value: "OS1",
-        label: "OS1",
-      },
-      {
-        value: "OS2",
-        label: "OS2",
-      },
-    ];
+    this.getList();
+    this.getFilterList();
   },
 
   methods: {
-    handleSizeChange() {},
-    handleCurrentChange() {},
-    handleSelectionChange() {},
-    addEquipment() {
-      this.drawer = true;
+    handleSizeChange(val) {
+      this.params.pageSize = val;
+      this.pagination.pageSize = val;
+      this.getList();
     },
+
+    handleCurrentChange(val) {
+      this.params.pageNo = val;
+      this.pagination.currentPage = val;
+      this.getList()
+    },
+
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
+    },
+
+    getList() {
+      managementService.getList(this.params).then(res => {
+        if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+					noLogin();
+				} else if (res.data.code === this.$statusCode.SUCCESS) {
+					this.tableData = res.data.body.list[0];
+          this.pagination.total = res.data.body.total;
+          this.tableData.forEach(res => {
+            let obj = '';
+            res.disk.forEach((item,index) => {
+              obj += item.count + '*' + item.size + ' ' + item.type;
+              if(index !== res.disk.length - 1) {
+                obj += ','
+              }
+            })
+            res.disk = obj;
+          })
+				}
+      })
+    },
+
+    // 获取筛选列表信息
+    getFilterList() {
+      managementService.getFilterList().then(res => {
+        if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+					noLogin();
+				} else if (res.data.code === this.$statusCode.SUCCESS) {
+          this.filters.serverType = this.handleData(res.data.body.serverTypeList);
+          this.filters.modelType = this.handleData(res.data.body.modelTypeList);
+          this.filters.testOrganization = this.handleData(res.data.body.testOrganization);
+          this.filters.resourceType = this.handleData(res.data.body.resourceTypeList);
+          this.filters.platform = this.handleData(res.data.body.platformList);
+          this.filters.cpu = this.handleData(res.data.body.cpuList);
+          this.filters.region = this.handleData(res.data.body.regionList);
+          this.filters.status = this.handleData(res.data.body.statusList);
+        }
+      })
+    },
+    
+    // 处理筛选数据
+    handleData(array) {
+      let arr = [];
+      if(array && array.length > 0) {
+        array.forEach(item => {
+          let obj = {
+            label: item,
+            value: item,
+          }
+          arr.push(obj);
+        })    
+      }
+      
+      return arr;
+    },
+
+
     closeDrawer() {
       this.drawer = false;
     },
+
     filterHeader(list) {
       this.headerSelected = list;
     },
@@ -588,20 +566,20 @@ export default {
         this.filterSelected.serverType = column.serverType;
       }
 
-      if (column.serverModel) {
-        if (column.serverModel.length > 0) {
-          let obj = this.handleFilter(column, "serverModel");
+      if (column.modelType) {
+        if (column.modelType.length > 0) {
+          let obj = this.handleFilter(column, "modelType");
           this.chooseList.push(obj);
         }
-        this.filterSelected.serverModel = column.serverModel;
+        this.filterSelected.modelType = column.modelType;
       }
 
-      if (column.serverModel) {
-        if (column.serverModel.length > 0) {
-          let obj = this.handleFilter(column, "serverModel");
+      if (column.resourceType) {
+        if (column.resourceType.length > 0) {
+          let obj = this.handleFilter(column, "resourceType");
           this.chooseList.push(obj);
         }
-        this.filterSelected.serverModel = column.serverModel;
+        this.filterSelected.resourceType = column.resourceType;
       }
 
       if (column.platform) {
@@ -611,18 +589,58 @@ export default {
         }
         this.filterSelected.platform = column.platform;
       }
+
+      if (column.cpu) {
+        if (column.cpu.length > 0) {
+          let obj = this.handleFilter(column, "cpu");
+          this.chooseList.push(obj);
+        }
+        this.filterSelected.cpu = column.cpu;
+      }
+
+      if (column.region) {
+        if (column.region.length > 0) {
+          let obj = this.handleFilter(column, "region");
+          this.chooseList.push(obj);
+        }
+        this.filterSelected.region = column.region;
+      }
+
+      if (column.status) {
+        if (column.status.length > 0) {
+          let obj = this.handleFilter(column, "status");
+          this.chooseList.push(obj);
+        }
+        this.filterSelected.status = column.status;
+      }
+
+      if (column.testOrganization) {
+        if (column.testOrganization.length > 0) {
+          let obj = this.handleFilter(column, "testOrganization");
+          this.chooseList.push(obj);
+        }
+        this.filterSelected.testOrganization = column.testOrganization;
+      }
     },
 
     handleFilter(arr, key) {
       let str = "";
       if (key === "serverType") {
         str = "测试场景：";
-      } else if (key === "serverModel") {
-        str = "任务阶段：";
-      } else if (key === "serverModel") {
+      } else if (key === "modelType") {
         str = "服务器型号：";
+      } else if (key === "resourceType") {
+        str = "资源类型：";
+      } else if (key === "platform") {
+        str = "算力平台：";
+      } else if (key === "cpu") {
+        str = "cpu：";
+      } else if(key === "region") {
+        str = "地域：";
+      } else if(key === "testOrganization") {
+        str = "测试机构：";
       } else {
-        str = "操作系统：";
+        str = "状态："
       }
       arr[key].forEach((item, index) => {
         str += item;
@@ -648,27 +666,84 @@ export default {
       this.chooseList = [];
       this.filterSelected = {
         serverType: [],
-        serverModel: [],
-        serverModel: [],
+        modelType: [],
+        resourceType: [],
         platform: [],
+        cpu: [],
+        region: [],
+        status: [],
+        testOrganization: [],
       };
     },
 
-    searchData() {},
+    searchData(val) {
+      this.params.keyword = val;
+      this.getList();
+    },
 
-    
-    deleteServer(row) {
-      console.log(row);
+    handelEdit(row) {
+      this.editData = JSON.parse(JSON.stringify(row));
+      if(row.disk) {
+        let arr = row.disk.split(",");
+        this.editData.disk = [];
+        arr.forEach(item => {
+          let arr1 = item.split('*');
+          let obj = {
+            type: arr1[1].split(' ')[1],
+            size: arr1[1].split(' ')[0],
+            count: arr1[0],
+          }
+          this.editData.disk.push(obj);
+        })
+      }else {
+        this.editData.disk = [
+          {
+            type: '',
+            size: '',
+            count: '',
+          }
+        ]
+      }
+      this.drawer = true;
+    },
+
+    batchDelete() {
+      let arr = [];
+      this.multipleSelection.forEach(item => {
+        arr.push(item.deviceId)
+      })
+      this.deleteServer(arr, true)
+    },
+
+    deleteServer(row,val) {
       this.$confirm('服务器删除后将不可恢复，确定要删除服务器？', '删除服务器', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
         }).then(() => {
-          this.$message({
-            type: 'success',
-            message: '删除成功!',
-            showClose: true,
-          });
+          let params = [];
+          params = val ? row : [row.deviceId]
+          managementService.deleteServer(params).then(res => {
+            if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+              noLogin();
+            } else if (res.data.code === this.$statusCode.SUCCESS) {
+              this.getList();
+              this.$message({
+                type: 'success',
+                message: '所选服务器已删除。',
+                showClose: true,
+              });
+            }
+          })
+          
         })
+    },
+
+    handleCancel(val) {
+      this.drawer = false;
+      this.editData = {};
+      if(val) {
+        this.getList();
+      }
     }
   },
 };

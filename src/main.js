@@ -8,6 +8,7 @@ import './assets/style/global.scss'
 
 Vue.use(ElementUI);
 Vue.config.productionTip = false
+Vue.prototype.$statusCode = store.state.statusCode;
 
 new Vue({
   router,

@@ -5,23 +5,25 @@
       :rules="rules"
       ref="ruleForm"
       class="demo-ruleForm"
+      status-icon
     >
-      <el-form-item prop="account">
+      <el-form-item prop="username">
         <img
           src="../../assets/login/clear.svg"
-          v-show="ruleForm.account && clearShow.isClear1"
+          v-show="ruleForm.username && clearShow.isClear1"
           class="input-clear"
-          @mousedown="ruleForm.account = ''"
+          @mousedown="ruleForm.username = ''"
         />
         <el-input
           type="text"
-          v-model="ruleForm.account"
+          v-model="ruleForm.username"
           placeholder="请输入账号"
           @focus="clearShow.isClear1 = true"
           @blur="clearShow.isClear1 = false"
+          @input="handleValidate()"
         ></el-input>
       </el-form-item>
-      <el-form-item prop="password">
+      <el-form-item prop="password" class="password">
         <img
           :src="isShow ? eyes.show : eyes.hide"
           :class="isShow ? 'eye-img eye-show' : 'eye-img eye-hide'"
@@ -39,6 +41,8 @@
           placeholder="请输入密码"
           @focus="clearShow.isClear2 = true"
           @blur="clearShow.isClear2 = false"
+          @input="handleValidate()"
+          @keyup.enter.native="submitForm()"
         ></el-input>
       </el-form-item>
       <el-form-item>
@@ -52,18 +56,21 @@
 <script>
 import { mapMutations } from "vuex";
 import { validate } from "@/utils/validate/loginValidate.js";
+import { loginService } from '@/utils/loginService';
 
 export default {
   name: "LoginForm",
   data() {
     return {
       ruleForm: {
-        account: "",
+        username: "swx1125250",
         password: "",
       },
       rules: {
-        account: [{ validator: validate.validateAccount, trigger: "blur" }],
-        password: [{ validator: validate.validatePassword, trigger: "blur" }],
+        username: [{ validator: validate.validateAccount, trigger: "blur" }],
+        password: [
+          { validator: validate.validatePassword, trigger: "blur" },
+          ],
       },
       eyes: {
         hide: require("@/assets/login/hide.svg"),
@@ -82,13 +89,42 @@ export default {
       this.switchForm(true);
     },
 
+    keyDown() {
+      if(e.keyCode == 13){
+        this.submitForm();
+      }
+    },
+
     submitForm() {
       this.$refs["ruleForm"].validate((valid) => {
         if (valid) {
-          this.$router.push("/workbench/task");
+          loginService.login(this.ruleForm).then(res => {
+            if(res.data.code === this.$statusCode.LOGIN_FAILED) {
+              this.rules.username = [{validator: function(rule, value, callback) {
+                  callback(new Error(' '))
+                }
+              }],
+              this.rules.password = [{validator: function(rule, value, callback) {
+                  callback(new Error(res.data.msg));
+                }
+              }],
+              this.$refs['ruleForm'].validateField('username');
+              this.$refs['ruleForm'].validateField('password');
+            }else if(res.data.code === this.$statusCode.SUCCESS) {
+              sessionStorage.setItem('token',res.headers.token)
+              this.$router.push("/workbench/task");
+            }
+          })
+          
         }
       });
     },
+
+    handleValidate() {
+      this.rules.username = [{ validator: validate.validateAccount, trigger: "blur" }];
+      this.rules.password = [{ validator: validate.validatePassword, trigger: "blur" }];
+      this.$refs["ruleForm"].clearValidate();
+    }
   },
 };
 </script>
@@ -139,5 +175,11 @@ export default {
     margin-top: 8px;
     cursor: pointer;
   }
+  .password .el-input{
+    ::v-deep .el-input__suffix {
+      display: none;
+    }
+  }
 }
+
 </style>

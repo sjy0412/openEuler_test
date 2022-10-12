@@ -25,6 +25,8 @@ const validate = {
       callback(new Error('密码长度不超过20！'))
     }else if (value.trim().length <= 0) {
       callback(new Error('请输密码'));
+    }else if (value.trim().length < 8) {
+      callback(new Error('密码长度不能小于8'));
     }else {
       callback();
     }

@@ -1,7 +1,7 @@
 <template>
   <div class="table-list">
     <el-table
-    :data="assignData"
+    :data="tableData"
     border
     resizable
     style="width: 100%"
@@ -14,11 +14,11 @@
       </template>
     </el-table-column>
     <el-table-column
-      prop="time"
+      prop="applyTime"
       label="开始时间">
     </el-table-column>
     <el-table-column
-      prop="rank"
+      prop="queuePosition"
       label="位次"
       v-if="!isAssign"
       >
@@ -30,7 +30,7 @@
       >
     </el-table-column>
     <el-table-column
-      prop="IP"
+      prop="ipAddress"
       label="IP地址"
       v-if="isAssign"
       >
@@ -54,7 +54,7 @@
       >
     </el-table-column>
     <el-table-column
-      prop="jumper"
+      prop="jumperIp"
       label="跳板机IP"
       v-if="isAssign"
       >
@@ -64,14 +64,35 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
+
 export default {
   name: 'AssignServer',
-  props: ['assignData', 'isAssign'],
   data() {
-      return {
-        
-      }
+    return {
+      tableData: [],
+      isAssign: false,
     }
+  },
+  computed: {
+    ...mapState('detail', {
+      detailData: 'detail'
+    })
+  },
+  watch: {
+    detailData: {
+			handler(newVal) {
+				if(newVal.queue) {
+          this.tableData.push(newVal.queue);
+          this.isAssign = false;
+        }else {
+          this.tableData.push(newVal.server);
+          this.isAssign = true;
+        } 
+			},
+			deep: true,
+		}, 
+  }
 }
 </script>
 
