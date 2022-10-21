@@ -16,7 +16,7 @@ function noLogin() {
         closeOnPressEscape: false,
         showClose: false,
     }).then(() => {
-        window.location.href= '/login'
+        window.location.href= '/openEulerTest/console/#/login'
     })
     .catch(() => {
       

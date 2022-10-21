@@ -13,7 +13,7 @@
 				</el-radio-group>
 			</el-form-item>
 			<el-form-item label="群组" prop="groupList">
-				<el-checkbox-group v-model="form.groupList" @change="handleGroupChange">
+				<el-checkbox-group v-model="form.groupList">
 					<el-checkbox v-for="group in groupLists" :label="group" :key="group" name="groupList">{{
 						group
 					}}</el-checkbox>
@@ -51,6 +51,7 @@
 import { accountService } from "@/utils/accountService";
 import { noLogin } from "@/utils/publicFunction.js";
 import { publicValidate } from "@/utils/validate/publicValidate";
+import { menuService } from "@/utils/menuService.js";
 
 export default {
 	name: "Dialog",
@@ -82,32 +83,29 @@ export default {
 					email: [{ required: true, validator: publicValidate.emailValidate, trigger: "blur" }],
 				},
 			},
-			testOptions: [
-				{
-					label: "创新中心旗舰店",
-					value: "创新中心旗舰店",
-				},
-			],
+			testOptions: [],
 		};
 	},
 
 	created() {
-		if(this.editData.length) {
-this.form = {
-			testOrganization: this.editData.testOrganization,
-			labManager: this.editData.roleDesc,
-			groupList: this.editData.groupList,
-			userList: [
-				{
-					userName: this.editData.userName,
-					uniportalId: this.editData.uniportalId,
-					telephone: this.editData.telephone,
-					email: this.editData.email,
-				},
-			],
-		};
+		if (this.editData.uniportalId) {
+			this.$nextTick(() => {
+				this.form = {
+				testOrganization: this.editData.testOrganization,
+				labManager: this.editData.roleDesc,
+				groupList: this.editData.groupList,
+				userList: [
+					{
+						userName: this.editData.userName,
+						uniportalId: this.editData.uniportalId,
+						telephone: this.editData.telephone,
+						email: this.editData.email,
+					},
+				],
+			};
+			})	
 		}
-		
+		this.getItem();
 	},
 
 	watch: {
@@ -132,8 +130,25 @@ this.form = {
 			deep: true,
 		},
 	},
+
 	methods: {
-		handleGroupChange(value) {},
+		getItem() {
+      let id = 'ITEM_0019';
+      menuService.getItem(id).then((res) => {
+        if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+          noLogin();
+        } else if (res.data.code === this.$statusCode.SUCCESS) {
+          this.testOptions = [];
+          res.data.body.forEach((item) => {
+            let obj = {
+              label: item.name,
+              value: item.name
+            }
+            this.testOptions.push(obj);
+          });
+        }
+      });
+    },
 
 		// 添加成员
 		addMember() {
@@ -219,25 +234,12 @@ this.form = {
 				}
 			});
 		},
+
 		handleCancel() {
-			this.form = {
-				testOrganization: "",
-				labManager: "",
-				groupList: [],
-				userList: [
-					{
-						userName: "",
-						uniportalId: "",
-						telephone: "",
-						email: "",
-					},
-				],
-			};
 			this.$refs["form"].resetFields();
-			// this.$refs["form"].clearValidate();
-			setTimeout(()=>{
-			this.$emit("cancel", false);
-			},100)
+			setTimeout(() => {
+				this.$emit("cancel", false);
+			}, 100);
 		},
 	},
 };
@@ -252,7 +254,6 @@ this.form = {
 		width: 160px;
 		margin-right: 8px;
 	}
-	
 }
 .el-icon {
 	i {

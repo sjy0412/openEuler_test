@@ -5,27 +5,36 @@
 				<i class="el-icon-arrow-left"></i>
 				返回
 			</p>
-			<img src="@/assets/detail/orange.svg" />
+			<img :src="statusImg" />
 			<div class="flex-column">
 				<span class="project-status">
-					<el-tag class="dfp">{{ data.taskStatus }}</el-tag>
+					<el-tag :style="statusStyle">{{ data.taskStatus }}</el-tag>
 				</span>
 				<span>{{ data.projectId }}</span>
 			</div>
 			<ProcessLine :statusList="statusList" :currentIndex="currentIndex"></ProcessLine>
 			<div class="test-btn">
-				<el-button type="primary" @click="terminateTest" size="small"> 终止测试 </el-button>
-				<el-button type="default" @click="reTest" size="small" v-if="false"> 重新测试 </el-button>
-				<el-button type="primary" @click="terminateTest" size="small" v-if="false"> 下载报告 </el-button>
-				<el-popover placement="bottom-start" trigger="click" width="88" popper-class="popper-more">
-					<div class="more-btn">
-						<p>预览报告</p>
-						<p>重新测试</p>
-					</div>
-					<div class="opera-more" slot="reference">
-						<el-button>更多<i class="el-icon-caret-bottom"></i></el-button>
-					</div>
-				</el-popover>
+				<el-button
+					type="primary"
+					@click="dialogVisible1 = true"
+					size="small"
+					v-if="data.taskStatus === '等待分配服务器' || data.taskStatus === '测试'"
+					>终止测试</el-button
+				>
+				<el-button type="default" @click="restartTest" size="small" v-if="data.taskStatus !== '认证结束'"
+					>重新测试</el-button
+				>
+				<el-button
+					:type="data.taskStatus === '测试失败' ? 'default' : 'primary'"
+					@click="downUpload"
+					size="small"
+					v-if="data.taskStatus !== '等待分配服务器' && data.taskStatus !== '测试'"
+				
+					>下载报告</el-button
+				>
+				<el-button type="primary" @click="dialogVisible = true" size="small" v-if="data.taskStatus === '测试失败'"
+					>填写原因</el-button
+				>
 			</div>
 		</div>
 
@@ -40,7 +49,7 @@
 					</el-card>
 				</el-timeline-item>
 
-				<el-timeline-item icon="el-icon-success" placement="top" class="success" v-if="$route.query.testScene !== 'openEuler商业发行版' && currentIndex >= 1">
+				<el-timeline-item icon="el-icon-success" placement="top" :class="statusClass" v-if="currentIndex >= 1">
 					<el-card>
 						<div :class="['bar-title', isOpen.assignServer ? 'open-card' : '']" @click="openCard('assignServer')">
 							分配服务器
@@ -86,11 +95,15 @@
 						></RepositoryTest>
 					</el-card>
 				</el-timeline-item>
-				<el-timeline-item :hide-timestamp="true" icon="el-icon-success" placement="top" class="success" v-if="$route.query.testScene !== 'openEuler商业发行版' && currentIndex >= 2">
+				<el-timeline-item
+					:hide-timestamp="true"
+					:icon="statusIcon"
+					placement="top"
+					class="success"
+					v-if="currentIndex >= 2"
+				>
 					<el-card>
-						<div :class="['bar-title', isOpen.test ? 'open-card' : '']" @click="openCard('test')">
-							{{ $route.query.testScene === "openEuler商业发行版" ? "基本功能测试" : "测试" }}
-						</div>
+						<div :class="['bar-title', isOpen.test ? 'open-card' : '']" @click="openCard('test')">测试</div>
 						<Test v-show="isOpen.test"></Test>
 					</el-card>
 				</el-timeline-item>
@@ -132,14 +145,16 @@
 						<OecnTest v-show="isOpen.oecn" :tableData="oecnData"></OecnTest>
 					</el-card>
 				</el-timeline-item>
-				<el-timeline-item :hide-timestamp="true" icon="el-icon-success" v-if="$route.query.testScene !== 'openEuler商业发行版' && currentIndex >= 3" placement="top" class="success">
+				<el-timeline-item
+					:hide-timestamp="true"
+					icon="el-icon-success"
+					v-if="currentIndex >= 3"
+					placement="top"
+					class="success"
+				>
 					<el-card>
 						<div :class="['bar-title', isOpen.testSuccess ? 'open-card' : '']" @click="openCard('testSuccess')">
 							<div class="test-title">测试通过</div>
-							<div v-if="false" class="test-title">
-								<span>测试失败</span>
-								<span class="re-run">重新测试</span>
-							</div>
 						</div>
 						<span v-show="isOpen.testSuccess" class="test-end project-card">{{ "结束时间：" + data.finishTime }}</span>
 					</el-card>
@@ -149,7 +164,7 @@
 					icon="el-icon-success"
 					placement="top"
 					class="success"
-					v-if="$route.query.testScene !== 'openEuler商业发行版' && currentIndex >= 4"
+					v-if="currentIndex >= 4 && data.testScenario === 'isv'"
 				>
 					<el-card>
 						<div :class="['bar-title', isOpen.serverRelease ? 'open-card' : '']" @click="openCard('serverRelease')">
@@ -165,16 +180,15 @@
 					icon="el-icon-success"
 					placement="top"
 					class="success"
-					v-if="
-						($route.query.testScene !== 'openEuler商业发行版' && currentIndex >= 5) ||
-						($route.query.testScene === 'openEuler商业发行版' && currentIndex >= 8)
-					"
+					v-if="(data.testScenario === 'ihv' && currentIndex >= 4) || data.testScenario === 'isv' && currentIndex >= 5"
 				>
 					<el-card>
 						<div :class="['bar-title', isOpen.certificateEnd ? 'open-card' : '']" @click="openCard('certificateEnd')">
 							认证结束
 						</div>
-						<span v-show="isOpen.certificateEnd" class="test-end project-card">结束时间：xxx</span>
+						<span v-show="isOpen.certificateEnd" class="test-end project-card">{{
+							"结束时间：" + data.finishTime
+						}}</span>
 					</el-card>
 				</el-timeline-item>
 				<el-timeline-item
@@ -182,7 +196,7 @@
 					icon="el-icon-success"
 					placement="top"
 					class="success"
-					v-if="$route.query.testScene === 'openEuler商业发行版'"
+					v-if="data.testScenario === 'ihv' && currentIndex === 5"
 				>
 					<el-card>
 						<div :class="['bar-title', isOpen.serverRelease ? 'open-card' : '']" @click="openCard('serverRelease')">
@@ -211,10 +225,18 @@
 				</el-timeline-item>
 			</el-timeline>
 		</div>
+		<el-dialog title="失败原因" :visible.sync="dialogVisible">
+			<Dialog @handleCancel="handleCancel" :dialogData="dialogData"></Dialog>
+		</el-dialog>
+		<el-dialog title="终止测试" :visible.sync="dialogVisible1">
+			<TerminateDialog @handleCancel="handleCancel1" :dialogData="dialogData"></TerminateDialog>
+		</el-dialog>
 	</div>
 </template>
 
 <script>
+import Dialog from "@/components/taskDetail/Dialog";
+import TerminateDialog from "@/components/taskDetail/TerminateDialog";
 import ProcessLine from "@/components/public/ProcessLine";
 import SubmitInfo from "@/components/taskDetail/SubmitInfo";
 import AssignServer from "@/components/taskDetail/AssignServer";
@@ -240,9 +262,14 @@ export default {
 		RepositoryTest,
 		BaseTest,
 		OecnTest,
+		Dialog,
+		TerminateDialog,
 	},
 	data() {
 		return {
+			dialogVisible: false,
+			dialogData: {},
+			dialogVisible1: false,
 			statusList: [],
 			currentIndex: 0,
 			compileData: [
@@ -392,6 +419,7 @@ export default {
 				repository: false,
 				baseTest: false,
 				oecn: false,
+				serverInit: false,
 				test: false,
 				testSuccess: false,
 				serverRelease: false,
@@ -401,27 +429,22 @@ export default {
 			},
 			scrollLeft: 0,
 			data: {},
+			statusStyle: {
+				background: "#f97611",
+				borderColor: "#f97611",
+			},
+			statusImg: require("@/assets/detail/orange.svg"),
+			statusIcon: "el-icon-success",
+			statusClass: "success",
 		};
 	},
 
 	created() {
-		if (this.$route.query.testScenario !== "openEuler商业发行版") {
-			this.statusList = ["提交测试任务", "分配服务器", "测试", "测试完成", "服务器释放", "认证结束"];
-		} else {
-			this.statusList = [
-				"提交测试任务",
-				"分配服务器",
-				"编译打包",
-				"仓库测试",
-				"基本功能测试",
-				"基础性能测试",
-				"oecn测试",
-				"测试通过",
-				"认证结束",
-				"服务器释放",
-			];
-		}
 		this.getPreview();
+		this.dialogData = {
+			projectId: this.$route.query.projectId,
+			requestId: this.$route.query.requestId,
+		};
 	},
 
 	methods: {
@@ -441,6 +464,20 @@ export default {
 					noLogin();
 				} else if (res.data.code === this.$statusCode.SUCCESS) {
 					this.data = res.data.body;
+					if (this.data.testScenario === "ihv") {
+						this.statusList = [
+							"提交测试任务",
+							"分配服务器",
+							"测试",
+							"测试完成",
+							"认证结束",
+							"服务器释放",
+						];
+						this.dialogData.testScenario = "整机与板卡";
+					} else {
+						this.statusList = ["提交测试任务", "分配服务器", "测试", "测试完成", "服务器释放", "认证结束"];
+						this.dialogData.testScenario = "商业软件";
+					}
 					this.switchInfo(this.data);
 					this.handleStatus();
 				}
@@ -451,55 +488,112 @@ export default {
 		handleStatus() {
 			switch (this.data.taskStatus) {
 				case "submit":
-					this.data.taskStatus = "提交测试";
+					this.data.taskStatus = "提交测试任务";
 					this.currentIndex = 0;
 					break;
 				case "waiting to allocate server":
 					this.data.taskStatus = "等待分配服务器";
 					this.currentIndex = 1;
+					this.statusImg = require("@/assets/detail/orange.svg");
+					this.statusStyle = {
+						background: "#f97611",
+						borderColor: "#f97611",
+					};
 					break;
+				case "server init":
+				case "server install":
 				case "server allocated":
-					this.data.taskStatus = "已分配服务器";
-					this.currentIndex = 2;
-					break;
 				case "testing":
-					this.data.taskStatus = "兼容性测试中";
+					this.data.taskStatus = "测试";
+					this.statusIcon = "el-icon-more";
+					this.statusClass = "on-going";
 					this.currentIndex = 2;
+					this.statusImg = require("@/assets/detail/blue.svg");
+					this.statusStyle = {
+						background: "#07f",
+						borderColor: "#07f",
+					};
 					break;
 				case "test failed":
-					this.data.taskStatus = "测试失败";
+					this.data.taskStatus = "测试";
+					this.statusIcon = "el-icon-error";
+					this.statusClass = "error";
 					this.currentIndex = 2;
+					this.statusImg = require("@/assets/detail/blue.svg");
+					this.statusStyle = {
+						background: "#07f",
+						borderColor: "#07f",
+					};
 					break;
 				case "test finished":
+				case "test done":
 					this.data.taskStatus = "测试完成";
+					this.statusIcon = "el-icon-success";
+					this.statusClass = "success";
 					this.currentIndex = 3;
+					this.statusImg = require("@/assets/detail/green.svg");
+					this.statusStyle = {
+						background: "#24ab36",
+						borderColor: "#24ab36",
+					};
 					break;
 				case "server release":
 					this.data.taskStatus = "服务器释放";
-					this.currentIndex = 4;
+					this.currentIndex = this.data.testScenario === 'ihv' ? 5 : 4;
+					this.statusImg = require("@/assets/detail/darkblue.svg");
+					this.statusStyle = {
+						background: "#2a739d",
+						borderColor: "#2a739d",
+					};
 					break;
 				case "certificated":
 					this.data.taskStatus = "认证结束";
-					this.currentIndex = 5;
+					this.currentIndex = this.data.testScenario === 'ihv' ? 4 : 5;
+					this.statusImg = require("@/assets/detail/cyan.svg");
+					this.statusStyle = {
+						background: "#30b7bb",
+						borderColor: "#30b7bb",
+					};
 					break;
 				case "test terminated":
 					this.data.taskStatus = "测试终止";
-					this.currentIndex = 2;
-					break;
-				case "test done":
-					this.data.taskStatus = "测试结束";
-					this.currentIndex = 2;
+					if (this.data.server === null) {
+						this.currentIndex = 1;
+					} else {
+						this.currentIndex = 2;
+					}
+					this.statusImg = require("@/assets/detail/gray.svg");
+					this.statusStyle = {
+						background: "#8d98aa",
+						borderColor: "#8d98aa",
+					};
 					break;
 				default:
 					break;
 			}
 		},
 
-		// 终止测试
-		terminateTest() {},
-
 		// 重新测试
-		reTest() {},
+		restartTest() {
+      taskListService.restartTest(this.data.projectId, this.data.requestId).then((res) => {
+				if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+					noLogin();
+				} else if (res.data.code === this.$statusCode.SUCCESS) {
+
+        }
+      })
+    },
+
+		// 下载报告
+		downUpload() {
+      taskListService.downUpload(this.data.projectId, this.data.requestId).then((res) => {
+				if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+					noLogin();
+				} else if (res.data.code === this.$statusCode.SUCCESS) {
+
+        }
+      })
+    },
 
 		openCard(cardName) {
 			if (cardName === "submitTest") {
@@ -514,6 +608,8 @@ export default {
 				this.isOpen.baseTest = !this.isOpen.baseTest;
 			} else if (cardName === "oecn") {
 				this.isOpen.oecn = !this.isOpen.oecn;
+			} else if (cardName === "serverInit") {
+				this.isOpen.serverInit = !this.isOpen.serverInit;
 			} else if (cardName === "test") {
 				this.isOpen.test = !this.isOpen.test;
 			} else if (cardName === "testSuccess") {
@@ -527,6 +623,14 @@ export default {
 			} else if (cardName === "operateLog") {
 				this.isOpen.operateLog = !this.isOpen.operateLog;
 			}
+		},
+
+		handleCancel1() {
+			this.dialogVisible1 = false;
+		},
+
+		handleCancel() {
+			this.dialogVisible = false;
 		},
 
 		handelScroll() {
@@ -582,10 +686,6 @@ export default {
 			line-height: normal;
 			padding: 0 7px;
 			border-radius: 2px;
-		}
-		.dfp {
-			background: #f97611;
-			border-color: #f97611;
 		}
 	}
 	.steps {
@@ -722,5 +822,10 @@ export default {
 }
 ::v-deep .el-timeline-item__timestamp.is-top {
 	margin-bottom: 0;
+}
+
+::v-deep .el-dialog {
+	width: 516px !important;
+	min-width: fit-content;
 }
 </style>

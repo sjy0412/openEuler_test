@@ -6,7 +6,7 @@
       :class="[
         'status-step',
         index < currentIndex ? 'success' : '',
-        statusList.length > 6 ? 'step-width' : '',
+        statusList.length > 7 ? 'step-width' : '',
       ]"
     >
       <div :class="['step-index', index === currentIndex ? 'active1' : '']">

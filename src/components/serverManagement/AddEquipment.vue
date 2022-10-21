@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-form
-      label-width="80px"
+      label-width="104px"
       :model="formData"
       label-position="left"
       :rules="rules"
@@ -50,7 +50,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="设备ID" prop="deviceId">
-          <el-input v-model="formData.deviceId" placeholder="请输入"></el-input>
+          <el-input v-model="formData.deviceId" placeholder="格式：DC1_01_001"></el-input>
         </el-form-item>
         <el-form-item label="服务器类型" prop="serverType">
           <el-select v-model="formData.serverType" placeholder="请选择">
@@ -88,9 +88,9 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="内存" prop="ram">
+        <el-form-item label="内存" prop="ram.count">
           <div class="form-flex">
-            <el-form-item prop="ram.size" :rules="rules.ramList.size">
+            <el-form-item prop="ram.size">
               <el-select
                 v-model="formData.ram.size"
                 placeholder="请选择"
@@ -104,28 +104,27 @@
                 ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item prop="ram.count" :rules="rules.ramList.count">
+            <el-form-item prop="ram.count">
               <el-input-number
                 v-model="formData.ram.count"
-                @change="handleChange"
                 :min="1"
               >
               </el-input-number>
             </el-form-item>
           </div>
         </el-form-item>
-        <el-form-item label="网卡" prop="nic">
+        <el-form-item label="网卡">
           <div
             v-for="(nicItem, index) in formData.nic"
             :key="index"
             class="form-flex"
           >
             <el-form-item
-              :prop="`nic.` + index + `.type`"
-              :rules="rules.nicList.type"
+              :prop="`nic.` + index + `.size`"
+              :rules="rules.nic.size"
             >
               <el-select
-                v-model="nicItem.type"
+                v-model="nicItem.size"
                 placeholder="请选择"
                 class="dis-right"
               >
@@ -139,21 +138,21 @@
             </el-form-item>
             <el-form-item
               :prop="`nic.` + index + `.count`"
-              :rules="rules.nicList.count"
+              :rules="rules.nic.count"
             >
               <el-input-number
                 v-model="nicItem.count"
-                @change="handleChange"
                 :min="1"
                 class="dis-right"
               >
               </el-input-number>
-              <i class="el-icon-circle-plus-outline"></i>
+              <i class="el-icon-remove-outline" v-show="formData.nic.length > 1" @click="deleteNic(index)"></i>
+              <i class="el-icon-circle-plus-outline" @click="addNic"></i>
             </el-form-item>
           </div>
         </el-form-item>
 
-        <el-form-item label="硬盘" prop="disk">
+        <el-form-item label="硬盘">
           <div
             v-for="(diskItem, index) in formData.disk"
             :key="index"
@@ -161,7 +160,7 @@
           >
             <el-form-item
               :prop="`disk.` + index + `.type`"
-              :rules="rules.diskList.type"
+              :rules="rules.disk.type"
             >
               <el-select
                 v-model="diskItem.type"
@@ -178,7 +177,7 @@
             </el-form-item>
             <el-form-item
               :prop="`disk.` + index + `.size`"
-              :rules="rules.diskList.size"
+              :rules="rules.disk.size"
             >
               <el-select
                 v-model="diskItem.size"
@@ -195,18 +194,19 @@
             </el-form-item>
             <el-form-item
               :prop="`disk.` + index + `.count`"
-              :rules="rules.diskList.count"
+              :rules="rules.disk.count"
             >
               <el-input-number
                 v-model="diskItem.count"
-                @change="handleChange"
                 :min="1"
                 class="dis-right"
               >
               </el-input-number>
-              <i class="el-icon-remove-outline"></i>
-              <i class="el-icon-circle-plus-outline"></i>
             </el-form-item>
+            <div>
+              <i class="el-icon-remove-outline" v-show="formData.disk.length > 1" @click="deleteDisk(index)"></i>
+              <i class="el-icon-circle-plus-outline" @click.stop="addDisk"></i>
+            </div>
           </div>
         </el-form-item>
       </div>
@@ -223,6 +223,7 @@
 import { managementService } from "@/utils/managementService.js";
 import { menuService } from "@/utils/menuService.js";
 import { noLogin } from "@/utils/publicFunction.js";
+import { validate } from "@/utils/validate/equipment.js"
 
 export default {
   name: "AddEquipment",
@@ -258,30 +259,29 @@ export default {
         ],
       },
       rules: {
-        region: [{ required: true, message: "请选择" }],
-        deviceId: [{ required: true, message: "请输入设备ID" }],
-        resourceType: [{ required: true, message: "请选择" }],
-        platform: [{ required: true, message: "请选择" }],
-        status: [{ required: true, message: "请选择" }],
-        serverType: [{ required: true, message: "请选择" }],
-        modelType: [{ required: true, message: "请选择区域" }],
-        bmcIp: [{ required: true, message: "请输入" }],
-        cpu: [{ required: true, message: "请选择" }],
-        ram: [{ required: true, message: "" }],
-        ramList: {
-          size: [{ required: true, message: "请选择" }],
-          count: [{ required: true, message: "请选择" }],
+        region: [{ required: true, message: "请选择", trigger: "change"}],
+        deviceId: [{ required: true, validator: validate.validateDeviceId, trigger: "blur"}],
+        resourceType: [{ required: true, message: "请选择", trigger: "change" }],
+        platform: [{ required: true, message: "请选择", trigger: "change" }],
+        status: [{ required: true, message: "请选择", trigger: "change" }],
+        serverType: [{ required: true, message: "请选择", trigger: "change" }],
+        modelType: [{ required: true, message: "请选择区域", trigger: "change" }],
+        bmcIp: [{ required: true, message: "请输入", trigger: "blur" }],
+        cpu: [{ required: true, message: "请选择", trigger: "change" }],
+        ram: {
+          size: [{ required: true, message: "请选择", trigger: "change" }],
+          count: [{ required: true, message: "请选择", trigger: "change" }],
         },
-        nic: [{ required: true, message: "" }],
-        nicList: {
-          type: [{ required: true, message: "请选择" }],
-          count: [{ required: true, message: "请选择" }],
+        nicBar: [{ required: true, message: " ", trigger: "change" }],
+        nic: {
+          size: [{ required: true, message: "请选择", trigger: "change" }],
+          count: [{ required: true, message: "请选择", trigger: "change" }],
         },
-        disk: [{ required: true, message: "" }],
-        diskList: {
-          type: [{ required: true, message: "请选择" }],
-          size: [{ required: true, message: "请选择" }],
-          count: [{ required: true, message: "请选择" }],
+        diskBar: [{ required: true, message: "" }],
+        disk: {
+          type: [{ required: true, message: "请选择", trigger: "change" }],
+          size: [{ required: true, message: "请选择", trigger: "change" }],
+          count: [{ required: true, message: "请选择", trigger: "change" }],
         },
       },
       selectData: {
@@ -313,7 +313,8 @@ export default {
     this.getItem("ITEM_0018");
     this.$nextTick(() => {
       if(this.editData.deviceId) {
-        this.formData = JSON.parse(JSON.stringify(this.editData)); 
+        this.formData = JSON.parse(JSON.stringify(this.editData));
+        console.log(this.formData);
       }
     }) 
   },
@@ -330,8 +331,6 @@ export default {
   },
 
   methods: {
-    handleChange() {},
-
     getItem(id) {
       menuService.getItem(id).then((res) => {
         if (res.data.code === this.$statusCode.LOGIN_FAILED) {
@@ -383,15 +382,24 @@ export default {
     handelSubmit() {
       this.$refs["formData"].validate((valid) => {
         if (valid) {
+          this.formData.disk = newArr;
           managementService.addServer(this.formData).then((res) => {
             if (res.data.code === this.$statusCode.LOGIN_FAILED) {
               noLogin();
-            } else if (res.data.code === this.$statusCode.SUCCESS) {
-              this.$message({
+            } else if (res.data.code === this.$statusCode.SUCCESS) {            
+              if(this.editData.deviceId) {
+                this.$message({
+                  type: 'success',
+                  message: '修改成功!',
+                  showClose: true,
+                });
+              }else {
+                this.$message({
                 type: 'success',
                 message: '设备新增成功!',
                 showClose: true,
               });
+              }
               this.handleCancel(true);
             } else {
               this.$message({
@@ -404,6 +412,51 @@ export default {
       });
     },
 
+    // 处理重复数据
+    handelRepeat(arr) {
+      let newArr= [];
+      let diskType = [];
+      let diskSize = [];
+      arr.forEach((item,index) => {
+        if(index !== 0) {
+          if(diskType.indexOf(item.type) == -1 || diskSize.indexOf(item.size) == -1){
+            diskType.push(item.type);
+            diskSize.push(item.size);
+            newArr.push(item);
+          }
+        }else {
+          diskType.push(item.type);
+          diskSize.push(item.size);
+          newArr.push(item);
+        }
+      })
+      return newArr;
+    },
+
+
+    addNic() {
+      let obj = {
+        size: "",
+        count: 1, 
+      }
+      this.formData.nic.push(obj);
+    },
+    deleteNic(index) {
+      this.formData.nic.splice(index, 1);
+    },
+
+    deleteDisk(index) {
+      this.formData.disk.splice(index, 1);
+    },
+
+    addDisk() {
+      let obj = {
+        type: "",
+        count: 1,
+        size: "",  
+      }
+      this.formData.disk.push(obj);
+    },
 
     handleCancel(val) {
       this.$refs["formData"].resetFields();
@@ -464,7 +517,6 @@ export default {
   font-size: 14px;
   color: #4e5865;
   font-weight: 400;
-  margin-right: 24px;
   padding: 0;
 }
 ::v-deep .el-input .el-input__inner {
@@ -473,7 +525,7 @@ export default {
   border-radius: 2px;
 }
 ::v-deep .el-input {
-  width: 260px;
+  width: auto;
 }
 ::v-deep .el-form-item {
   margin-bottom: 16px;
@@ -512,7 +564,5 @@ export default {
   cursor: pointer;
   margin-right: 10px;
 }
-::v-deep .el-form-item__error {
-  left: 24px;
-}
 </style>
+  

@@ -14,7 +14,7 @@
 				>
 					<template slot-scope="{ node, data }">
 						<div class="custom-tree-node" @click="getCurrent(data)">
-							<div v-if="!data.isEdit" class="flex-row">
+							<div class="flex-row"  v-if="!data.isEdit">
 								<span>{{ data.name + "/" + data.id }}</span>
 								<span class="edit-icon">
 									<i class="el-icon-circle-plus-outline" @click="() => append(data)"></i>
@@ -28,7 +28,8 @@
 									<el-input v-model="data.name"></el-input>
 								</span>
 								<span class="edit-icon input-icon">
-									<i class="el-icon-circle-check" @click="addRelation(node, data)"></i>
+									<i class="el-icon-circle-check" v-if="data.id" @click="modifyRelation(data)"></i>
+									<i class="el-icon-circle-check" v-if="!data.id" @click="addRelation(data)"></i>
 									<i class="el-icon-delete" @click="remove(node, data)"></i>
 								</span>
 							</div>
@@ -112,7 +113,7 @@ export default {
 
 		append(data) {
 			this.defaultExpandedKeys.push(data.id);
-			const newChild = { name: "", isEdit: true, children: [], rootId: data.id };
+			const newChild = { name: "", isEdit: true, children: [], rootId: data.rootId, fatherId: data.id };
 			if (!data.children) {
 				this.$set(data, "children", []);
 			}
@@ -121,6 +122,7 @@ export default {
 		},
 
 		remove(node, data) {
+			console.log(data.name);
 			if (data.id) {
 				menuService.deleteItem(data.id).then((res) => {
 					if (res.data.code === this.$statusCode.LOGIN_FAILED) {
@@ -147,13 +149,11 @@ export default {
 		},
 
 		// 创建非一级下拉框
-		addRelation(node, data) {
-			console.log(node);
+		addRelation(data) {
 			let params = {
-				fatherId: data.rootId,
+				fatherId: data.fatherId,
 				description: data.name,
 			};
-			console.log(data);
 			menuService.addRelation(params).then((res) => {
 				if (res.data.code === this.$statusCode.LOGIN_FAILED) {
 					noLogin();
@@ -173,15 +173,42 @@ export default {
 			});
 		},
 
+		// 修改非一级下拉框
+		modifyRelation(data) {
+			let params = {
+				id: data.id,
+				description: data.name,
+			};
+			menuService.modifyRelation(params).then((res) => {
+				if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+					noLogin();
+				} else if (res.data.code === this.$statusCode.SUCCESS) {
+					this.$message({
+						message: "词条修改成功",
+						type: "success",
+					});
+					data.isEdit = false;
+					this.getList();
+				} else {
+					this.$message({
+						message: res.data.msg,
+						type: "error",
+					});
+				}
+			});
+		},
+
 		// 编辑非一级下拉框
 		editRelation(data) {
-			console.log(data);
+			let obj = JSON.parse(JSON.stringify(data.name));
+			data.name = '';
 			data.isEdit = true;
+			data.name = obj;
 		},
 
 		handleClose(val) {
 			this.dialogVisible = val;
-			this.getList();
+			this.getList(true);
 		},
 	},
 };

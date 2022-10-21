@@ -2,7 +2,7 @@
   <div class="project-card">
     <el-timeline>
       <el-timeline-item
-        v-for="(item, index) in detailData.operateLog"
+        v-for="(item, index) in detailData.operationLog"
         :key="index"
         class="operate"
         >

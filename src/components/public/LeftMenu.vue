@@ -2,7 +2,7 @@
   <div class="left-box">
     <ul class="left-panel">
        <router-link :to="item.url"  v-for="(item,index) in menuList" :key="index">
-        <li :class="['menu-item', currentIndex === index ? 'active' : '']" @click="changeMenu(index)">
+        <li :class="['menu-item', currentIndex === index ? 'active' : '']" @click="changeMenu(index)" v-if="item.show">
           <span>{{item.label}}</span>
         </li>
       </router-link> 
@@ -11,6 +11,8 @@
 </template>
 
 <script>
+import { loginService } from '@/utils/loginService';
+import { noLogin } from "@/utils/publicFunction.js";
 export default {
   data() {
     return {
@@ -19,18 +21,27 @@ export default {
         {
           label: '任务列表',
           url: '/workbench/task',
+          show: true,
         },
         {
           label: '服务器管理',
           url: '/workbench/serverManagement',
+          show: true,
         },
         {
           label: '下拉菜单管理',
           url: '/workbench/MenuManagement',
+          show: true,
         },
         {
           label: '账号维护',
           url: '/workbench/accountMaintenance',
+          show: true,
+        },
+        {
+          label: '认证申请',
+          url: '/workbench/certApply',
+          show: true,
         },
       ]
     }
@@ -38,6 +49,7 @@ export default {
 
   created() {
     this.setHighlight();
+    this.getUserRole();
   },
 
   methods: {
@@ -51,11 +63,32 @@ export default {
         this.currentIndex = 2;
       }else if (this.$route.name === 'AccountMaintenance') {
         this.currentIndex = 3;
+      }else if (this.$route.name === 'CertApply') {
+        this.currentIndex = 4;
       }
     },
 
     changeMenu(index) {
       this.currentIndex = index;
+    },
+    
+    // 获取权限
+    getUserRole() {
+      loginService.getUserRole().then(res => {
+        if (res.data.code === this.$statusCode.LOGIN_FAILED) {
+					noLogin();
+				} else if (res.data.code === this.$statusCode.SUCCESS) {
+          if(res.data.body.labManager && !res.data.body.administrator) {
+            this.menuList[2].show = false;
+            this.menuList[3].show = false;
+            this.menuList[4].show = false;
+          }else if(res.data.body.projectSupporter && !res.data.body.administrator) {
+            this.menuList[1].show = false;
+            this.menuList[2].show = false;
+            this.menuList[3].show = false;
+          }
+        }  
+      })
     }
   }
 }

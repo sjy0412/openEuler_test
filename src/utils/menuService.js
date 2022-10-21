@@ -24,6 +24,12 @@ const menuService = {
 		return axios.post(url, params);
 	},
 
+	// 修改下拉框关系
+	modifyRelation(params) {
+		const url = `/rest/v1/drop-down-box/modify-relation`;
+		return axios.post(url, params);
+	},
+
 	// 删除下拉框
 	deleteItem(id) {
 		const url = `/rest/v1/drop-down-box/delete-item?id=${id}`;

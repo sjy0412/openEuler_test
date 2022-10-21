@@ -39,6 +39,11 @@ const routes = [
         name: 'AccountMaintenance',
         component: () => import('@/views/workbench/AccountMaintenance.vue'),
       },
+      {
+        path: 'certApply',
+        name: 'CertApply',
+        component: () => import('@/views/workbench/CertApply.vue'),
+      },
     ]
   },
   {

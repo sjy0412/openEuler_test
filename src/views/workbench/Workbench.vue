@@ -18,18 +18,6 @@ export default {
   components: {
     LeftMenu
   },
-
-  created() {
-    this.getUserRole();
-  },
-
-  methods: {
-    getUserRole() {
-      loginService.getUserRole().then(res => {
-        // console.log(res.data);
-      })
-    } 
-  }
 }
 </script>
 

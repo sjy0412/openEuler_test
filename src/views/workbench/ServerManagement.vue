@@ -122,16 +122,6 @@
             width="112"
             v-if="headerSelected.includes(headerLabel[4].label)"
           >
-            <div slot="header" slot-scope="{}">
-              <FilterTable
-                :selectOption="filters.testOrganization"
-                :headerLabel="headerLabel[4].label"
-                @handleFilter="filterChange"
-                :filterSelected="filterSelected.testOrganization"
-                filterKey="testOrganization"
-              >
-              </FilterTable>
-            </div>
           </el-table-column>
           <el-table-column
             prop="resourceType"
@@ -198,7 +188,7 @@
             </template>
           </el-table-column>
           <el-table-column
-            prop="disk"
+            prop="diskStr"
             :label="headerLabel[9].label"
             show-overflow-tooltip
             v-if="headerSelected.includes(headerLabel[9].label)"
@@ -312,6 +302,7 @@ import FilterHeader from "@/components/public/FilterHeader.vue";
 import AddEquipment from "@/components/serverManagement/AddEquipment.vue";
 import { managementService } from "@/utils/managementService.js";
 import { noLogin } from "@/utils/publicFunction.js";
+import { menuService } from "@/utils/menuService.js";
 
 export default {
   name: "ServerManagement",
@@ -425,7 +416,6 @@ export default {
       filters: {
         serverType: [],
         modelType: [],
-        testOrganization: [],
         resourceType: [],
         platform: [],
         cpu: [],
@@ -435,7 +425,6 @@ export default {
       filterSelected: {
         serverType: [],
         modelType: [],
-        testOrganization: [],
         resourceType: [],
         platform: [],
         cpu: [],
@@ -505,7 +494,7 @@ export default {
                 obj += ','
               }
             })
-            res.disk = obj;
+            res.diskStr = obj;
           })
 				}
       })
@@ -519,7 +508,6 @@ export default {
 				} else if (res.data.code === this.$statusCode.SUCCESS) {
           this.filters.serverType = this.handleData(res.data.body.serverTypeList);
           this.filters.modelType = this.handleData(res.data.body.modelTypeList);
-          this.filters.testOrganization = this.handleData(res.data.body.testOrganization);
           this.filters.resourceType = this.handleData(res.data.body.resourceTypeList);
           this.filters.platform = this.handleData(res.data.body.platformList);
           this.filters.cpu = this.handleData(res.data.body.cpuList);
@@ -564,6 +552,7 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.serverType = column.serverType;
+        this.params.serverTypeList = column.serverType;
       }
 
       if (column.modelType) {
@@ -572,6 +561,7 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.modelType = column.modelType;
+        this.params.modelTypeList = column.modelType;
       }
 
       if (column.resourceType) {
@@ -580,6 +570,7 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.resourceType = column.resourceType;
+        this.params.resourceTypeList = column.resourceType;
       }
 
       if (column.platform) {
@@ -588,6 +579,7 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.platform = column.platform;
+        this.params.platformList = column.platform;
       }
 
       if (column.cpu) {
@@ -596,6 +588,7 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.cpu = column.cpu;
+        this.params.cpuList = column.cpu;
       }
 
       if (column.region) {
@@ -604,6 +597,7 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.region = column.region;
+        this.params.regionList = column.region;
       }
 
       if (column.status) {
@@ -612,6 +606,7 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.status = column.status;
+        this.params.statusList = column.status;
       }
 
       if (column.testOrganization) {
@@ -620,7 +615,9 @@ export default {
           this.chooseList.push(obj);
         }
         this.filterSelected.testOrganization = column.testOrganization;
+        this.params.testOrganizationList = column.testOrganization;
       }
+      this.getList();
     },
 
     handleFilter(arr, key) {
@@ -634,7 +631,7 @@ export default {
       } else if (key === "platform") {
         str = "算力平台：";
       } else if (key === "cpu") {
-        str = "cpu：";
+        str = "cpu: ";
       } else if(key === "region") {
         str = "地域：";
       } else if(key === "testOrganization") {
@@ -674,6 +671,14 @@ export default {
         status: [],
         testOrganization: [],
       };
+      this.params.serverTypeList = [];
+      this.params.modelTypeList = [];
+      this.params.resourceTypeList = [];
+      this.params.platformList = [];
+      this.params.cpuList = [];
+      this.params.regionList = [];
+      this.params.statusList = [];
+      this.getList();
     },
 
     searchData(val) {
@@ -683,27 +688,6 @@ export default {
 
     handelEdit(row) {
       this.editData = JSON.parse(JSON.stringify(row));
-      if(row.disk) {
-        let arr = row.disk.split(",");
-        this.editData.disk = [];
-        arr.forEach(item => {
-          let arr1 = item.split('*');
-          let obj = {
-            type: arr1[1].split(' ')[1],
-            size: arr1[1].split(' ')[0],
-            count: arr1[0],
-          }
-          this.editData.disk.push(obj);
-        })
-      }else {
-        this.editData.disk = [
-          {
-            type: '',
-            size: '',
-            count: '',
-          }
-        ]
-      }
       this.drawer = true;
     },
 
@@ -733,8 +717,7 @@ export default {
                 showClose: true,
               });
             }
-          })
-          
+          }) 
         })
     },
 

@@ -63,7 +63,7 @@ export default {
   data() {
     return {
       ruleForm: {
-        username: "swx1125250",
+        username: "",
         password: "",
       },
       rules: {

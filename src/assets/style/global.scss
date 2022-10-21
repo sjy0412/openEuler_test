@@ -423,6 +423,9 @@ body, html {
 .el-message__closeBtn {
   color: #94a2ae;
 }
+.el-dialog {
+  min-width: 926px;
+}
 
 .el-dialog__header {
   padding: 16px 24px;
